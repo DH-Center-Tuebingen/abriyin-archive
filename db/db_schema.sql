@@ -13,6 +13,14 @@
 --			pack_nr now an integer
 --          editing user stored for all tables
 -- v1.06 MD dmg_clean function to take care of DMB diacritics
+-- v1.07 MD	20160429 recent changes view for all history tables
+--          not null dropped for persons.lastname_translit  
+--          remove documents/place_in_dateline
+--          person_title werte anpassen
+-- ==============================================================================================
+-- NOTE: After v1.07 data entry has commenced; we now append changes at the end of the file.
+--       RUN ONLY THE CHANGES!!!
+-- ==============================================================================================
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -26,8 +34,10 @@ create sequence unique_object_id_seq;
 -- function to create history table for some table t
 create or replace function make_history_table(t text) returns void as $$
 begin
-	execute format('drop table if exists "%s_history"', t);
+	execute format('alter table "%s" add column edit_user int references users(id) on update cascade', t); -- add edit_user to original table
+	execute format('drop table if exists "%s_history" cascade', t);	
 	execute format('create table "%s_history" as table "%s"', t, t);
+	execute format('delete from "%s_history"', t);
 	execute format('alter table "%s_history" add column edit_timestamp timestamp not null default current_timestamp', t);
 	execute format('alter table "%s_history" add column edit_action varchar(10) not null', t);
 	execute format('alter table "%s_history" add column history_id serial primary key', t);
@@ -42,8 +52,7 @@ create table users (
 	name varchar(50) not null,
 	email varchar(100) unique not null,
 	password char(32) not null,
-	role varchar(100) default 'user' check (role in ('user', 'supervisor', 'admin')),
-	edit_user int references users(id) on update cascade
+	role varchar(100) default 'user' check (role in ('user', 'supervisor', 'admin'))	
 );
 select make_history_table('users');
 
@@ -51,14 +60,14 @@ drop type if exists edit_history_status cascade;
 create type edit_history_status as enum ('editing', 'editing_finished', 'unclear', 'approved');
 
 drop type if exists person_title cascade;
-create type person_title as enum ('imam', 'sayyid', 'shaykh');
+create type person_title as enum ('imām', 'sayyid', 'šayḫ', 'wālī');
 
 drop table if exists persons cascade;
 create table persons (
 	id int primary key default nextval('unique_object_id_seq'),
 	sex char(1) not null default 'm' check (sex in ('m', 'f')),
 	forename_translit varchar(50) not null,
-	lastname_translit varchar(50) not null,
+	lastname_translit varchar(50), -- nullable!
 	byname_translit varchar(50),
 	forename_arabic varchar(50),
 	lastname_arabic varchar(50),
@@ -79,8 +88,7 @@ create table persons (
 	gregorian_death_year_lower int,
 	gregorian_death_year_upper int,
 	information text,
-	edit_note text,
-	edit_user int references users(id) on update cascade,
+	edit_note text,	
 	edit_status edit_history_status not null default 'editing'
 );
 select make_history_table('persons');
@@ -88,8 +96,7 @@ select make_history_table('persons');
 drop table if exists countries_and_regions cascade;
 create table countries_and_regions (
 	id int primary key default nextval('unique_object_id_seq'),
-	name varchar(50) unique not null,
-	edit_user int references users(id) on update cascade
+	name varchar(50) unique not null	
 );
 select make_history_table('countries_and_regions');
 
@@ -105,8 +112,7 @@ create table places (
 	coordinates geometry(geometry,4326),
 	type place_type not null default 'settlement',
 	country_region int not null references countries_and_regions(id) on update cascade,
-	edit_note text,
-	edit_user int references users(id) on update cascade,
+	edit_note text,	
 	edit_status edit_history_status not null default 'editing'
 );
 select make_history_table('places');
@@ -121,8 +127,7 @@ create table person_groups (
 	type person_group_type not null default 'tribe',
 	name_arabic varchar(50),
 	information text,
-	edit_note text,
-	edit_user int references users(id) on update cascade,
+	edit_note text,	
 	edit_status edit_history_status not null default 'editing'
 );
 select make_history_table('person_groups');
@@ -131,16 +136,14 @@ drop table if exists sources cascade;
 create table sources (
 	id int primary key default nextval('unique_object_id_seq'),
 	full_title varchar(1000) not null,
-	short_title varchar(100) not null,
-	edit_user int references users(id) on update cascade
+	short_title varchar(100) not null	
 );
 select make_history_table('sources');
 
 drop table if exists keywords cascade;
 create table keywords (
 	id int primary key default nextval('unique_object_id_seq'),
-	keyword varchar(50) not null unique,
-	edit_user int references users(id) on update cascade
+	keyword varchar(50) not null unique
 );
 select make_history_table('keywords');
 
@@ -162,10 +165,8 @@ create table documents (
 	pack_nr int check(pack_nr >= 0),
 	content xml,
 	abstract text,
-	physical_location int not null references places(id) on update cascade,
-	place_in_dateline int references places(id) on update cascade,
-	edit_note text,
-	edit_user int references users(id) on update cascade,
+	physical_location int not null references places(id) on update cascade,	
+	edit_note text,	
 	edit_status edit_history_status not null default 'editing'
 );
 select make_history_table('documents');
@@ -177,8 +178,7 @@ create table scans (
 	filepath varchar(1000) unique not null,
 	filesize int check (filesize >= 0),
 	filetype varchar(100),
-	information text,
-	edit_user int references users(id) on update cascade
+	information text	
 );
 select make_history_table('scans');
 
@@ -188,6 +188,7 @@ create table document_scans (
 	scan int references scans(id) on update cascade,
 	primary key(document, scan)
 );
+select make_history_table('document_scans');
 
 ----------------------------------------
 
@@ -197,8 +198,7 @@ create table document_to_document_references (
 	target_doc int references documents(id) on update cascade,	
 	comment varchar(100),
 	primary key (source_doc, target_doc),
-	check (source_doc <> target_doc),
-	edit_user int references users(id) on update cascade
+	check (source_doc <> target_doc)
 );
 select make_history_table('document_to_document_references');
 
@@ -208,6 +208,7 @@ create table document_keywords (
 	keyword int references keywords(id) on update cascade,
 	primary key (document, keyword)	
 );
+select make_history_table('document_keywords');
 
 drop table if exists document_places cascade;
 create table document_places (
@@ -215,6 +216,7 @@ create table document_places (
 	place int references places(id) on update cascade,
 	primary key (document, place)
 );
+select make_history_table('document_places');
 
 drop table if exists document_authors cascade;
 create table document_authors (
@@ -222,6 +224,7 @@ create table document_authors (
 	person int references persons(id) on update cascade,	
 	primary key (document, person)
 );
+select make_history_table('document_authors');
 
 drop table if exists document_addresses cascade;
 create table document_addresses (
@@ -229,8 +232,7 @@ create table document_addresses (
 	person int references persons(id) on update cascade,
 	place int references places(id) on update cascade,
 	has_forwarded boolean not null default false,
-	primary key (document, person),
-	edit_user int references users(id) on update cascade
+	primary key (document, person)
 );
 select make_history_table('document_addresses');
 
@@ -242,8 +244,7 @@ create table document_persons (
 	document int references documents(id) on update cascade,
 	person int references persons(id) on update cascade,
 	primary key (document, person),
-	type person_role not null default 'other',
-	edit_user int references users(id) on update cascade
+	type person_role not null default 'other'
 );
 select make_history_table('document_persons');
 
@@ -253,8 +254,7 @@ create table person_places (
 	place int references places(id) on update cascade,
 	primary key (person, place),	
 	from_year int,
-	to_year int,
-	edit_user int references users(id) on update cascade
+	to_year int
 );
 select make_history_table('person_places');
 
@@ -268,8 +268,7 @@ create table person_relatives (
 	primary key (person, relative),	
 	check (person <> relative),
 	type kinship not null default 'unknown',
-	information text,
-	edit_user int references users(id) on update cascade
+	information text
 );
 select make_history_table('person_relatives');
 
@@ -279,6 +278,7 @@ create table person_of_group (
 	person_group int references person_groups(id) on update cascade,
 	primary key (person, person_group)	
 );
+select make_history_table('person_of_group');
 
 drop table if exists person_group_places cascade;
 create table person_group_places (
@@ -286,6 +286,7 @@ create table person_group_places (
 	place int references places(id) on update cascade,
 	primary key (person_group, place)
 );
+select make_history_table('person_group_places');
 
 drop table if exists bibliographic_references cascade;
 create table bibliographic_references (
@@ -293,8 +294,7 @@ create table bibliographic_references (
 	source int references sources(id) on update cascade,
 	page varchar(10),
 	volume varchar(10),
-	primary key (object, source),
-	edit_user int references users(id) on update cascade
+	primary key (object, source)
 );
 select make_history_table('bibliographic_references');
 
@@ -346,6 +346,10 @@ declare
 	arr char[] := string_to_array(unaccent(lower(t)), null);
 	r text := '';
 begin  
+	if arr is null then
+		return '';
+	end if;
+	
 	foreach c in array arr loop    
 		r := r || (case c 
 			when 'ṯ' then 't'
@@ -366,3 +370,36 @@ begin
 	return r;
 end;
 $$ language plpgsql;
+
+
+-- v1.07 START
+-- recent changes unified from all *_history tables
+drop type if exists recent_changes cascade;
+create type recent_changes as(
+	table_name varchar(50),
+	history_id int,	
+	timestamp timestamp,
+	action varchar(10),
+	user_id int);
+
+create or replace function get_recent_changes() returns setof recent_changes as $$
+declare
+	r recent_changes%rowtype;
+	t record;
+	x record;
+begin
+	for t in SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' and table_type = 'BASE TABLE' and table_name like '%_history' loop
+		for x in EXECUTE 'select * from ' || t.table_name loop
+			r.table_name := t.table_name;
+			r.history_id := x.history_id;
+			r.timestamp := x.edit_timestamp;
+			r.action := x.edit_action;
+			r.user_id := x.edit_user;
+			return next r;
+		end loop;
+	end loop;
+return;
+end; $$
+language 'plpgsql';
+
+create or replace view recent_changes_list as select * from get_recent_changes() order by timestamp desc;

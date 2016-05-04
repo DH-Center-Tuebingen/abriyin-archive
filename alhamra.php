@@ -17,6 +17,39 @@
 	}
 	
 	// ========================================================================================================
+	function alhamra_after_delete($table_name, $table_info, $primary_key_values) {
+	// in the _history tables, we overwrite the last editor (only set on insert/update) with the current editor
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		
+		if(!in_array($table_name, $CUSTOM_VARIABLES['tables_with_history']))
+			return;		
+		
+		$where_conds = array();		
+		foreach($primary_key_values as $pk => $val)
+			$where_conds[] = db_esc($pk) . ' = ?';
+		
+		$sql = sprintf("UPDATE %s SET edit_user = ? WHERE %s AND edit_action = 'DELETE' AND history_id = (SELECT MAX(history_id) FROM %s WHERE %s)",
+			db_esc($table_name . '_history'), implode(' AND ', $where_conds),
+			db_esc($table_name . '_history'), implode(' AND ', $where_conds));
+			
+		$db = db_connect();
+		if($db === false)
+			return false;
+		
+		$stmt = $db->prepare($sql);
+		if($stmt === false)
+			return false;
+		
+		$params = array_merge(
+			array($_SESSION['user_id']),
+			array_values($primary_key_values), 
+			array_values($primary_key_values));
+		
+		return $stmt->execute($params);
+	}
+	
+	// ========================================================================================================
 	function alhamra_before_insert_or_update($table_name, $table_info, &$columns, &$values) {
 	// ========================================================================================================
 		// set additional file properties for uploaded scans
@@ -169,21 +202,30 @@
 		}
 	}
 	
-	
 	// ========================================================================================================
 	function alhamra_menu_complete(&$menu) {
 	// ========================================================================================================
+		global $TABLES;		
+		
 		if($menu[1]['name'] != 'Browse & Edit') { // just to be sure
 			echo 'Need to update alhamra_menu_complete()';
 			return;
 		}
 		
 		$history_menu = array('name' => 'Editing History', 'items' => array());
+		
+		$history_menu['items'][] = array(); ///* placeholder to put recent changes in first place */
+		$history_menu['items'][] = '<li class="divider"></li>';
+		
 		for($i=0; $i<count($menu[1]['items']); $i++) {
 			if(substr($menu[1]['items'][$i]['label'], -16) == ' Editing History') {
 				$menu[1]['items'][$i]['label'] = substr($menu[1]['items'][$i]['label'], 0, -16);
 				$history_menu['items'][]= $menu[1]['items'][$i];
 				array_splice($menu[1]['items'], $i, 1);
+				$i--;
+			}
+			else if($menu[1]['items'][$i]['label'] == $TABLES['recent_changes_list']['display_name']) {
+				$history_menu['items'][0] = first(array_splice($menu[1]['items'], $i, 1));
 				$i--;
 			}
 		}
@@ -218,13 +260,21 @@
 		global $TABLES;
 		global $CUSTOM_VARIABLES;
 		
+		// set after_delete hook for all tables with history >>
+		foreach($CUSTOM_VARIABLES['tables_with_history'] as $table_name) {			
+			if(!isset($TABLES[$table_name]['hooks']))
+				$TABLES[$table_name]['hooks'] = array();				
+			
+			$TABLES[$table_name]['hooks']['after_delete'] = 'alhamra_after_delete';			
+		} // <<
+		
 		if(!isset($_SESSION['user_data']) || !isset($_SESSION['user_data']['role']))
 			return;
 		
 		// render a warning that data might be erased at any time >>
-		$demo_msg = "<div class='alert alert-info'><b>Important:</b> This is a demo version to play with. Data you enter here may be erased at any time.</div>";
+		/*$demo_msg = "<div class='alert alert-info'><b>Important:</b> This is a demo version to play with. Data you enter here may be erased at any time.</div>";
 		if(!in_array($demo_msg, $_SESSION['msg']))
-			$_SESSION['msg'][] = $demo_msg;
+			$_SESSION['msg'][] = $demo_msg;*/
 		
 		$role = $_SESSION['user_data']['role'];
 		
@@ -238,9 +288,9 @@
 			foreach($CUSTOM_VARIABLES['tables_with_history'] as $table_name) {
 				$history_table = $table_name . '_history';
 				
-				$TABLES[$history_table] = array_merge($TABLES[$table_name], array());
+				$TABLES[$history_table] = array_merge($TABLES[$table_name], array());				
 				$TABLES[$history_table]['actions'] = array( MODE_VIEW, MODE_LIST );
-				$TABLES[$history_table]['sort'] = 'history_id DESC';
+				$TABLES[$history_table]['sort'] = array('history_id' => 'desc');
 				$TABLES[$history_table]['primary_key'] = array('auto' => true, 'columns' => array('history_id') );
 				
 				$TABLES[$history_table]['fields'] = array(
@@ -252,6 +302,12 @@
 				$TABLES[$history_table]['display_name'] .= ' Editing History';
 				$TABLES[$history_table]['description'] = 'Editing History of: ' . $TABLES[$history_table]['description'];
 				unset($TABLES[$history_table]['additional_steps']);
+				
+				foreach($TABLES[$history_table]['fields'] as $field_name => $field) {					
+					// m:n associations cannot be reasonably displayed in history table, so remove
+					if($field['type'] == T_LOOKUP && $field['lookup']['cardinality'] == CARDINALITY_MULTIPLE)
+						unset($TABLES[$history_table]['fields'][$field_name]);
+				}				
 			}
 		}
 	}
