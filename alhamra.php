@@ -9,6 +9,12 @@
 	}
 	
 	// ========================================================================================================
+	function alhamra_recent_changes_item_view($table_name, $table, $record, $action) {
+	// ========================================================================================================
+		return "<a href='?table={$record['table_name']}&amp;history_id={$record['history_id']}&amp;mode=".MODE_VIEW."'><span title='View history entry' class='glyphicon glyphicon-zoom-in'></span></a>";
+	}
+	
+	// ========================================================================================================
 	function alhamra_render_main_page() {
 	// ========================================================================================================		
 		echo '<p>Choose an action from the top menu.</p>';
@@ -206,6 +212,10 @@
 	function alhamra_menu_complete(&$menu) {
 	// ========================================================================================================
 		global $TABLES;		
+		global $CUSTOM_VARIABLES;
+		
+		if($_SESSION['user_data']['role'] != 'admin')
+			return;
 		
 		if($menu[1]['name'] != 'Browse & Edit') { // just to be sure
 			echo 'Need to update alhamra_menu_complete()';
@@ -214,7 +224,8 @@
 		
 		$history_menu = array('name' => 'Editing History', 'items' => array());
 		
-		$history_menu['items'][] = array(); ///* placeholder to put recent changes in first place */
+		$history_menu['items'][] = array(); 
+		$history_menu['items'][] = array();
 		$history_menu['items'][] = '<li class="divider"></li>';
 		
 		for($i=0; $i<count($menu[1]['items']); $i++) {
@@ -224,14 +235,27 @@
 				array_splice($menu[1]['items'], $i, 1);
 				$i--;
 			}
-			else if($menu[1]['items'][$i]['label'] == $TABLES['recent_changes_list']['display_name']) {
+			/*else if($menu[1]['items'][$i]['label'] == $TABLES['recent_changes_list']['display_name']) {
 				$history_menu['items'][0] = first(array_splice($menu[1]['items'], $i, 1));
 				$i--;
-			}
+			}*/
 		}
+		
+		$TABLES['recent_changes_list'] = $CUSTOM_VARIABLES['extra_tables']['recent_changes_list'];
+		$history_menu['items'][0] = array('href' => '?table=recent_changes_list&amp;mode=' . MODE_LIST, 'label' => 'All Recent Changes');
+		
+		$TABLES['view_changes_by_user'] = $CUSTOM_VARIABLES['extra_tables']['view_changes_by_user'];
+		$history_menu['items'][1] = array('href' => '?table=view_changes_by_user&amp;mode=' . MODE_LIST, 'label' => 'Changes By User');
 		
 		if(count($history_menu['items']) > 0)
 			$menu[]= $history_menu;
+		
+		/*$extras_menu = array('name' => 'Extras', 'items' => array());
+		
+		$extras_menu['items'][] = '<li><a href="?table=view_changes_by_user&amp;mode='.MODE_LIST.'">Changes By User</a></li>';
+		$TABLES['view_changes_by_user'] = $CUSTOM_VARIABLES['extra_tables']['view_changes_by_user'];
+		
+		$menu[] = $extras_menu;		*/
 	}
 	
 	// ========================================================================================================
@@ -284,6 +308,7 @@
 		}
 		
 		else {
+			$hidden_assocs = array();
 			// Create the history tables by cloning and slighlty adapting the extistings ones
 			foreach($CUSTOM_VARIABLES['tables_with_history'] as $table_name) {
 				$history_table = $table_name . '_history';
@@ -300,14 +325,41 @@
 				) + $TABLES[$history_table]['fields'];
 				
 				$TABLES[$history_table]['display_name'] .= ' Editing History';
-				$TABLES[$history_table]['description'] = 'Editing History of: ' . $TABLES[$history_table]['description'];
+				$TABLES[$history_table]['item_name'] .= ' Editing History Entry';
+				$TABLES[$history_table]['description'] = '';//'History of insert, update and delete actions performed by users. '; 
+				$TABLES[$history_table]['show_in_related'] = false;
 				unset($TABLES[$history_table]['additional_steps']);
 				
 				foreach($TABLES[$history_table]['fields'] as $field_name => $field) {					
 					// m:n associations cannot be reasonably displayed in history table, so remove
-					if($field['type'] == T_LOOKUP && $field['lookup']['cardinality'] == CARDINALITY_MULTIPLE)
+					if($field['type'] == T_LOOKUP && $field['lookup']['cardinality'] == CARDINALITY_MULTIPLE) {
+						
+						$linkage_table = $field['linkage']['table'];
+						$linkage_history = $linkage_table . '_history';
+						
+						if(in_array($linkage_table, $CUSTOM_VARIABLES['tables_with_history']) 
+							&& isset($TABLES[$linkage_history])) 
+						{
+							if(!isset($hidden_assocs[$history_table]))
+								$hidden_assocs[$history_table] = array();
+							
+							$hidden_assocs[$history_table][$linkage_table] = '<a href="?'. http_build_query(array('table' => $linkage_history , 'mode' => MODE_LIST)) .'">'. 
+								html($TABLES[$linkage_history]['display_name']) . '</a>';
+						}
+						
 						unset($TABLES[$history_table]['fields'][$field_name]);
-				}				
+					}
+				}
+			}
+			
+			foreach($hidden_assocs as $assoc_table => $assoc_linkages) {
+				if(count($assoc_linkages) == 0)
+					continue;
+				
+				$desc = '<p>Note that associations with other records stored in dedicated association tables cannot be displayed within this table. To view these histories visit any of the following associated history tables: ';
+				$desc .= implode(', ', array_values($assoc_linkages));				
+				$desc .= '</p>';
+				$TABLES[$assoc_table]['description'] .= $desc;
 			}
 		}
 	}

@@ -17,10 +17,11 @@
 --          not null dropped for persons.lastname_translit  
 --          remove documents/place_in_dateline
 --          person_title werte anpassen
--- ==============================================================================================
--- NOTE: After v1.07 data entry has commenced; we now append changes at the end of the file.
---       RUN ONLY THE CHANGES!!!
--- ==============================================================================================
+-- v1.08 MD 20160511 document_author_groups new table
+--          sending & receiving greetings bei person_role enum
+-- v1.09 MD 20160512 recent changes charts
+--          combination of person last name, first names, byname unique to avoid duplicates
+--          new field document/translation
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -237,7 +238,7 @@ create table document_addresses (
 select make_history_table('document_addresses');
 
 drop type if exists person_role cascade;
-create type person_role as enum ('scribe', 'attestor', 'other');
+create type person_role as enum ('scribe', 'attestor', 'other', 'sending_greetings', 'receiving_greetings');
 
 drop table if exists document_persons cascade;
 create table document_persons (
@@ -306,6 +307,7 @@ create table user_sessions (
 );
 
 -- function to automatically insert or delete parent object for objects with history
+-- OUTDATED AS OF v1.09, but we MUST leave it here so the trigger assignments work
 create or replace function update_history_table() returns trigger as $$
 begin	
 	if (TG_OP = 'INSERT') then
@@ -403,3 +405,48 @@ end; $$
 language 'plpgsql';
 
 create or replace view recent_changes_list as select * from get_recent_changes() order by timestamp desc;
+
+-- v1.08
+drop table if exists document_author_groups cascade;
+create table document_author_groups (
+	document int references documents(id) on update cascade,
+	person_group int references person_groups(id) on update cascade,	
+	primary key (document, person_group)
+);
+select make_history_table('document_author_groups');
+
+--alter type person_role add value 'sending_greetings';
+--alter type person_role add value 'receiving_greetings';
+
+-- v1.09
+create or replace view view_changes_by_user as
+select user_id, (select role from users where id=user_id) user_role, count(*) num_changes, min(timestamp) first_change, max(timestamp) last_change 
+from recent_changes_list 
+where user_id is not null
+group by user_id, user_role
+order by count(*) desc;
+
+alter table persons add constraint person_name_unique unique (lastname_translit, forename_translit, byname_translit);
+
+-- alter the update_history_table trigger to work regardless of column order
+create or replace function update_history_table() returns trigger as $$
+declare
+	column_list text;
+begin	
+	select array_to_string(array_agg(quote_ident(column_name)), ', ') 
+	from information_schema.columns
+	where table_schema = 'public' and table_name = quote_ident(TG_TABLE_NAME)
+	into column_list;
+		
+	if (TG_OP in ('INSERT', 'UPDATE')) then
+		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s'' ', TG_TABLE_NAME, TG_OP) using NEW;
+		return NEW;
+	elsif (TG_OP = 'DELETE') then
+		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s''', TG_TABLE_NAME, TG_OP) using OLD;
+		return OLD;	
+	end if;		
+end;
+$$ language plpgsql;
+
+alter table documents add column translation text;
+alter table documents_history add column translation text;
