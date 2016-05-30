@@ -56,6 +56,8 @@
 		'person_group_places'
 	);
 	
+	$CUSTOM_VARIABLES['help_details_edit'] = 'Details of each assignment can be edited by clicking the <span class="glyphicon glyphicon-th-list"></span> icon.';
+	
 	$CUSTOM_VARIABLES['arabic_dates'] = 'These are Islamic dates. If available, fill in the <i>Year</i>, <i>Month</i>, and <i>Day</i> fields. If none of those are available, try to provide a date range by filling in the <i>Year From</i> and/or the <i>Year To</i> fields.';
 	
 	$CUSTOM_VARIABLES['arabic_dates_fromto'] = 'These are Islamic dates. If available provide a date range by filling in the either or both of the <i>From Year</i> and the <i>To Year</i> fields.';
@@ -125,7 +127,7 @@
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
 		'page_size'	=> 10,
-		'max_text_len' => 250,
+		'max_text_len' => 125,
 		'pages_prevnext' => 2,
 		'mainmenu_tables_autosort' => true,
 		'search_lookup_resolve' => true,
@@ -133,7 +135,9 @@
 		'search_string_transformation' => 'dmg_plain((%s)::text)',
 		'null_label' => "<span class='nowrap' title='If you check this box, no value will be stored for this field. This may reflect missing, unknown, unspecified or inapplicable information. Note that no value (missing information) is different to providing an empty value: an empty value is a value.'>No Value</span>",
 		'menu_complete_proc' => 'alhamra_menu_complete',
-		'render_main_page_proc' => 'alhamra_render_main_page'		
+		'render_main_page_proc' => 'alhamra_render_main_page',
+		'list_mincolwidth_max' => 300,
+		'list_mincolwidth_pxperchar' => 6
 	);
 	
 	/* ========================================================================================================	*/
@@ -274,7 +278,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),				
 				'document_addresses' => array('label' => 'Addressees', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign persons as addressees of the document. These assignments are stored as <a href="?table=document_addresses">Document Addresses</a> in a separate table, where more details (like place and whether it is a forwarding address) can be specified in a next step.',
+					'help' => 'Use this field to assign persons as addressees of the document. These assignments are stored as <a href="?table=document_addresses">Document Addresses</a> in a separate table. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'persons',
@@ -308,7 +312,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),				
 				'document_persons' => array('label' => 'Related Persons', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign persons occurring in some role in this document. These assignments are stored in a separate table <a href="?table=document_persons">Persons in Documents</a>, where details about the role of the related person (whether s/he was a scribe, attestor or other) can be specified in a next step.',
+					'help' => 'Use this field to assign persons occurring in some role in this document. These assignments are stored in a separate table <a href="?table=document_persons">Persons in Documents</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'persons',
@@ -322,7 +326,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),				
 				'document_to_document_references' => array('label' => 'Referenced Documents', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to specify which other documents in the archive are referenced by this one. These are stored in a separate table <a href="?table=document_to_document_references">Document-to-Document References</a>, where comments about each reference can be specified in a next step.',
+					'help' => 'Use this field to specify which other documents in the archive are referenced by this one. These are stored in a separate table <a href="?table=document_to_document_references">Document-to-Document References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'documents',
@@ -349,7 +353,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),				
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this document. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>, where details about each bibliographic reference (i.e., volume and page in the source) can be added in a next step.',
+					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this document. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'sources',
@@ -473,7 +477,7 @@
 						'fk_other' => 'document')
 				),*/
 				'person_places' => array('label' => 'Places/Locations', 'required' => false, 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign this person to places. These assignments are stored in a separate table <a href="?table=person_places">Places of Persons</a>, where the time frame of each place association can be added in a next step.',
+					'help' => 'Use this field to assign this person to places. These assignments are stored in a separate table <a href="?table=person_places">Places of Persons</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'places',
@@ -487,7 +491,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>, where details about each bibliographic reference (i.e., volume and page in the source) can be added in a next step.',
+					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'sources',
@@ -528,7 +532,7 @@
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
-					'related_label' => 'Details of Place Associations Of This Person')
+					'related_label' => 'Details Of Place Associations Of This Person')
 				),				
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
@@ -586,14 +590,14 @@
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signatory',
-					'related_label' => 'Details of Person Associations With This Document')
+					'related_label' => 'Details Of Person Associations With This Document')
 				),				
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
-					'related_label' => 'Details of Associations of This Person With Documents')
+					'related_label' => 'Details Of Associations of This Person With Documents')
 				),				
 				'type' => array('label' => 'Role', 'type' => T_ENUM, 'required' => true, 'default' => 'other', 'values' => array('attestor' => 'Attestor', 'scribe' => 'Scribe', 'sending_greetings' => 'Sending greetings', 'receiving_greetings' => 'Receiving greetings', 'other' => 'Other'), 'help' => 'In what role does the person occur in the document?'),				
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
@@ -614,14 +618,14 @@
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signatory',
-					'related_label' => 'Details of References Where This Is A Referencing Document')
+					'related_label' => 'Details Of References Where This Is A Referencing Document')
 				),				
 				'target_doc' => array('label' => 'Referenced Document (Target)', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signatory',
-					'related_label' => 'Details of References Where This Is A Referenced Document')
+					'related_label' => 'Details Of References Where This Is A Referenced Document')
 				),				
 				'comment' => array('label' => 'Comment', 'type' => T_TEXT_AREA),				
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
@@ -652,7 +656,7 @@
 					'related_label' => 'Places In This Country/Region')
 				),				
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this place. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>, where details about each bibliographic reference (i.e., volume and page in the source) can be added in a next step.',
+					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this place. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'sources',
@@ -717,7 +721,7 @@
 						'defaults' => array('edit_user' => '%SESSION_USER%'))
 				),				
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
-					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person group. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>, where details about each bibliographic reference (i.e., volume and page in the source) can be added in a next step.',
+					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person group. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'sources',
@@ -804,7 +808,7 @@
 						'table'   => 'citing_objects',
 						'field'   => 'id',
 						'display' => 'name',
-						'related_label' => 'Details of Bibliographic References Of This Object'
+						'related_label' => 'Details Of Bibliographic References Of This Object'
 					)
 				),
 				'source' => array('label' => 'Source', 'type' => T_LOOKUP, 'required' => true,
