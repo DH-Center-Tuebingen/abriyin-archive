@@ -124,7 +124,7 @@
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
-		'plugins' => array('alhamra.php', 'calendar.php'),
+		'plugins' => array('alhamra.php', 'calendar.php', 'db-diagram.plugin.php'),
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
 		'page_size'	=> 10,

@@ -18,7 +18,11 @@
 	function alhamra_render_main_page() {
 	// ========================================================================================================		
 		//echo '<p>Choose an action from the top menu.</p>';		
-		echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";
+		//echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";
+		
+		echo '<div style="width:100%; height:300px; position:relative" id="cy"></div>';
+		echo db_diagram_get_js('cy');
+		
 		echo "<div style='width:270px' class='center'><a href='http://escience.uni-tuebingen.de'><img src='images/escience-logo-transparent.svg'></img></a></div>";		
 	}
 	
