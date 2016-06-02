@@ -364,8 +364,9 @@ begin
 			when 'ṣ' then 's'
 			when 'ẓ' then 'z'
 			when 'ḷ' then 'l'	
-			--when 'ʿ' then ''
-			--when 'ʾ' then ''
+			--when 'ʿ' then ''''
+			--when 'ʾ' then ''''
+			when ' ' then E'\011' -- \011 is horizontal tab, needed as word separator because blanks are removed for whatever reason!!!
 			else c 
 		end);
 	end loop;
