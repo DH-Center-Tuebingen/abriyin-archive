@@ -22,11 +22,12 @@
 -- v1.09 MD 20160512 recent changes charts
 --          combination of person last name, first names, byname unique to avoid duplicates
 --          new field document/translation
--- v1.10 MD document_type enum extension (sales_contract, authorization)
+-- v1.10 MD 20160603 document_type enum extension (sales_contract, authorization)
 --			document_person_type enum extension (secondary_recipient)
 --			COLUMN CHANGES: document.signatory varchar(7) => .signature varchar(8), document.abstract => .summary
 --          TABLE NAME CHANGES: document_authors => document_primary_agents, document_author_groups => document_primary_agent_groups,
 --             document_addresses => document_recipients
+-- v1.11 MD 20160606 update dmg_plain for diacritics that come as dedicated characters (who knows why?)
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -373,8 +374,13 @@ begin
 			when 'ṣ' then 's'
 			when 'ẓ' then 'z'
 			when 'ḷ' then 'l'	
+			
+			when '̄' then ''
+			when '̣' then ''
+			
 			--when 'ʿ' then ''''
 			--when 'ʾ' then ''''
+			
 			when ' ' then E'\011' -- \011 is horizontal tab, needed as word separator because blanks are removed for whatever reason!!!
 			else c 
 		end);

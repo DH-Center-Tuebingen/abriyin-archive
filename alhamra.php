@@ -279,6 +279,23 @@
 	}
 	
 	// ========================================================================================================
+	function alhamra_custom_related_list($table_name, /*const*/ &$table, 
+		/*const*/ &$pk_vals, /*in,out*/ &$rel_list) {
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		if(in_array($table_name, $CUSTOM_VARIABLES['tables_with_history'])
+			&& count($pk_vals) == 1) // search is currently limited to 1 column
+		{
+			$rel_list[] = array(
+				'table_name' => $table_name . '_history', 
+				'table_label' => '',
+				'field_name' => first(array_keys($pk_vals)),
+				'field_label' => '',
+				'display_label' => 'Editing History Of This ' . $table['item_name']);
+		}
+	}
+	
+	// ========================================================================================================
 	function alhamra_permissions() {
 	// ========================================================================================================
 		global $TABLES;
@@ -316,6 +333,24 @@
 				$TABLES[$history_table] = array_merge($TABLES[$table_name], array());				
 				$TABLES[$history_table]['actions'] = array( MODE_VIEW, MODE_LIST );
 				$TABLES[$history_table]['sort'] = array('history_id' => 'desc');
+				
+				// turn primary key column (if only one) into a lookup, so to link the original items from their history
+				if(isset($TABLES[$history_table]['primary_key'])
+					&& count($TABLES[$history_table]['primary_key']['columns']) == 1 
+					&& $TABLES[$history_table]['fields'][$key_col = $TABLES[$history_table]['primary_key']['columns'][0]] != T_LOOKUP)
+				{
+					$TABLES[$history_table]['fields'][$key_col] = array(
+						'type' => T_LOOKUP,
+						'label' => $TABLES[$history_table]['item_name'] . ' ' . $TABLES[$history_table]['fields'][$key_col]['label'],
+						'lookup' => array(
+							'cardinality' => CARDINALITY_SINGLE, 
+							'table' => $table_name, 
+							'field' => $key_col, 
+							'display' => $key_col)
+					);
+				}
+				
+				// now we need to make history_id the primary key to enable MODE_VIEW correctly
 				$TABLES[$history_table]['primary_key'] = array('auto' => true, 'columns' => array('history_id') );
 				
 				$TABLES[$history_table]['fields'] = array(
