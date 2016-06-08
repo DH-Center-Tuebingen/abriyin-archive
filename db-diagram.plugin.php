@@ -76,18 +76,6 @@ EOT;
 			);
 			
 			foreach($table['fields'] as $field_name => $field) {
-				/*if($field['type'] !== T_LOOKUP 
-					|| $field['lookup']['cardinality'] !== CARDINALITY_SINGLE 
-					|| !isset($TABLES[$field['lookup']['table']])
-					|| in_array($field['lookup']['table'], array('users')))
-				{
-					continue;
-				}
-				
-				$edges[] = sprintf("{data: {id: '%s', source: '%s', target: '%s', weight:1, label: %s}}",
-					$table_name . '#' . $field_name, $table_name, $field['lookup']['table'], json_encode($field['label'])
-				);*/
-				
 				if($field['type'] !== T_LOOKUP)
 					continue;
 				
@@ -102,8 +90,6 @@ EOT;
 				);
 			}
 		}
-		
-		//			$edges[] = "{data:{id:'$f$t',source:$f,target:$t,weight:$w,label:'FUCK'}}";
 		
 		$nodes = implode(', ', $nodes);
 		$edges = implode(', ', $edges);
