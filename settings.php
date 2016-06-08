@@ -27,7 +27,7 @@
 		'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'reset' => false /* not sure */, 'help' => 'This is an informal field that you can use to leave personal editoral comments and notes (e.g. what you are unclear about)'),				
 		'edit_status' => array('label' => 'Editing Status', 'type' => T_ENUM, 'required' => true, 'default' => 'editing', 'help' => 'While you are editing the document set the status to <b>Editing</b>. When you are done editing and feel the record is ready for review, set to <b>Editing finished</b>. If you are unclear about any field or information set the status to <b>Unclear</b> and put an explanatory comment or note in the <i>Editing note</i> field. The status <b>Approved</b> should only be set by the seminar leaders.',
 			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved')),	
-		'edit_user' => array('label' => 'Last Editor', 'type' => T_LOOKUP, 'editable' => false, 'default' => '%SESSION_USER%', 'lookup' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'users', 'field' => 'id', 'display' => 'name'))
+		'edit_user' => array('label' => 'Last Editor', 'type' => T_LOOKUP, 'editable' => false, 'default' => REPLACE_DYNAMIC_SESSION_USER, 'lookup' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'users', 'field' => 'id', 'display' => 'name'))
 	);
 	
 	// note: for all these tables, an after_insert hook will be automatically added in alhamra_menu_complete
@@ -154,6 +154,7 @@
 		'password_field' => 'password',
 		'name_field' => 'name',
 		'password_hash_func' => 'md5',
+		'allow_change_password' => true,
 		'form' => array('username' => 'Email', 'password' => 'Password'),
 		'initializer_proc' => 'alhamra_permissions',
 		'login_success_proc' => 'alhamra_login_success'		
@@ -240,7 +241,7 @@
 						'table' => 'document_scans',
 						'fk_self' => 'document',
 						'fk_other' => 'scan',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'default' => 'letter', 'values' => array('letter' => 'Letter', 'sales_contract' => 'Sales Contract', 'authorization' => 'Authorization', 'other' => 'Other'), 'help' => 'The type of document determines the kind person assigned in the <i>Primary Agents</i>, <i>Primary Agent Groups</i>, and <i>Recipients</i> fields'),				
 				'physical_location' => array('label' => 'Physical Location', 'type' => T_LOOKUP, 'required' => true, 
@@ -264,7 +265,7 @@
 						'table' => 'document_primary_agents',
 						'fk_self' => 'document',
 						'fk_other' => 'person',
-						'defaults' => array('edit_user' => '%SESSION_USER%')),
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
 						'controlled_by' => 'type',						
 						'mapping' => array(							
@@ -286,7 +287,7 @@
 						'table' => 'document_primary_agent_groups',
 						'fk_self' => 'document',
 						'fk_other' => 'person_group',
-						'defaults' => array('edit_user' => '%SESSION_USER%')),
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
 						'controlled_by' => 'type',						
 						'mapping' => array(							
@@ -308,7 +309,7 @@
 						'table' => 'document_recipients',
 						'fk_self' => 'document',
 						'fk_other' => 'person',
-						'defaults' => array('edit_user' => '%SESSION_USER%')),
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
 						'controlled_by' => 'type',						
 						'mapping' => array(							
@@ -336,7 +337,7 @@
 						'table' => 'document_places',
 						'fk_self' => 'document',
 						'fk_other' => 'place',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'related_persons' => array('label' => 'Related Persons', 'type' => T_LOOKUP, 
 					'help' => 'Use this field to assign persons occurring in some role in this document. These assignments are stored in a separate table <a href="?table=document_persons">Persons in Documents</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
@@ -350,7 +351,7 @@
 						'table' => 'document_persons',
 						'fk_self' => 'document',
 						'fk_other' => 'person',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'document_to_document_references' => array('label' => 'Referenced Documents', 'type' => T_LOOKUP, 
 					'help' => 'Use this field to specify which other documents in the archive are referenced by this one. These are stored in a separate table <a href="?table=document_to_document_references">Document-to-Document References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
@@ -364,7 +365,7 @@
 						'table' => 'document_to_document_references',
 						'fk_self' => 'source_doc',
 						'fk_other' => 'target_doc',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'keywords' => array('label' => 'Keywords', 'type' => T_LOOKUP, 
 					'lookup' => array(
@@ -377,7 +378,7 @@
 						'table' => 'document_keywords',
 						'fk_self' => 'document',
 						'fk_other' => 'keyword',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this document. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
@@ -391,7 +392,7 @@
 						'table' => 'bibliographic_references',
 						'fk_self' => 'object',
 						'fk_other' => 'source',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				//'content' => array('label' => 'Content (XML)', 'type' => T_TEXT_AREA),
 				'summary' => array('label' => 'Summary', 'type' => T_TEXT_AREA),
@@ -476,7 +477,7 @@
 						'table' => 'person_of_group',
 						'fk_self' => 'person',
 						'fk_other' => 'person_group',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'birth_year' => array('label' => 'Birth Date: Year', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'birth_month' => array('label' => 'Birth Date: Month', 'type' => T_ENUM, 'values' => $CUSTOM_VARIABLES['islam_months'], 'help' => $CUSTOM_VARIABLES['arabic_dates']),
@@ -515,7 +516,7 @@
 						'table' => 'person_places',
 						'fk_self' => 'person',
 						'fk_other' => 'place',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
@@ -529,7 +530,7 @@
 						'table' => 'bibliographic_references',
 						'fk_self' => 'object',
 						'fk_other' => 'source',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),				
 				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>kinship (e.g. son / brother / uncle of…)</li><li>social / political position (e.g. governor (wālī) of…)</li><li>ALSO: murdered by…; varying dates of birth / death</li></ul>'),
@@ -694,7 +695,7 @@
 						'table' => 'bibliographic_references',
 						'fk_self' => 'object',
 						'fk_other' => 'source',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],		
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
@@ -732,7 +733,7 @@
 						'table' => 'person_group_places',
 						'fk_self' => 'person_group',
 						'fk_other' => 'place',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'members' => array('label' => 'Group Members', 'type' => T_LOOKUP, 'help' => 'All persons belonging to this person group',
 					'lookup' => array(
@@ -745,7 +746,7 @@
 						'table' => 'person_of_group',
 						'fk_self' => 'person_group',
 						'fk_other' => 'person',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),				
 				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person group. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
@@ -759,7 +760,7 @@
 						'table' => 'bibliographic_references',
 						'fk_self' => 'object',
 						'fk_other' => 'source',
-						'defaults' => array('edit_user' => '%SESSION_USER%'))
+						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),		
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
 				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],		
