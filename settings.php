@@ -140,7 +140,8 @@
 		'render_main_page_proc' => 'alhamra_render_main_page',
 		'list_mincolwidth_max' => 300,
 		'list_mincolwidth_pxperchar' => 6,
-		'custom_related_list_proc' => 'alhamra_custom_related_list'
+		'custom_related_list_proc' => 'alhamra_custom_related_list',
+		'preprocess_html_func' => 'alhamra_preprocess_html'
 	);
 	
 	/* ========================================================================================================	*/
