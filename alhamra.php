@@ -27,7 +27,7 @@
 	// ========================================================================================================
 		// wrap arabic text in enlarged font container in MODE_LIST and MODE_VIEW
 		if(isset($_GET['mode']) && ($_GET['mode'] == MODE_LIST || $_GET['mode'] == MODE_VIEW))
-			return preg_replace('/(\p{Arabic}+(\s+\p{Arabic}+)*)/u', '<span lang="ar">$1</span>', $html);
+			return preg_replace('/(\p{Arabic}+(\s+\p{Arabic}+)*)/u', '<span dir="rtl" lang="ar">$1</span>', $html);
 		return $html;
 	}
 	
