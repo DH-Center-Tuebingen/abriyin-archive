@@ -124,12 +124,8 @@
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
-<<<<<<< HEAD
 		'plugins' => array('alhamra.php', 'calendar.php', 'db-diagram.plugin.php', 'db-network.plugin.php'),
-=======
-		'page_icon' => 'images/uni-tuebingen.ico',
-		'plugins' => array('alhamra.php', 'calendar.php'),
->>>>>>> refs/remotes/origin/master
+		'page_icon' => 'images/uni-tuebingen.ico',		
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
 		'page_size'	=> 10,
