@@ -22,6 +22,12 @@
 -- v1.09 MD 20160512 recent changes charts
 --          combination of person last name, first names, byname unique to avoid duplicates
 --          new field document/translation
+-- v1.10 MD 20160603 document_type enum extension (sales_contract, authorization)
+--			document_person_type enum extension (secondary_recipient)
+--			COLUMN CHANGES: document.signatory varchar(7) => .signature varchar(8), document.abstract => .summary
+--          TABLE NAME CHANGES: document_authors => document_primary_agents, document_author_groups => document_primary_agent_groups,
+--             document_addresses => document_recipients
+-- v1.11 MD 20160606 update dmg_plain for diacritics that come as dedicated characters (who knows why?)
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -31,6 +37,27 @@ create extension if not exists postgis schema public;
 
 drop sequence if exists unique_object_id_seq cascade;
 create sequence unique_object_id_seq;
+
+-- function to automatically insert or delete parent object for objects with history.
+-- works regardless of column order (i.e. when new columns are appended at the end of a table)
+create or replace function update_history_table() returns trigger as $$
+declare
+	column_list text;
+begin	
+	select array_to_string(array_agg(quote_ident(column_name)), ', ') 
+	from information_schema.columns
+	where table_schema = 'public' and table_name = quote_ident(TG_TABLE_NAME)
+	into column_list;
+		
+	if (TG_OP in ('INSERT', 'UPDATE')) then
+		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s'' ', TG_TABLE_NAME, TG_OP) using NEW;
+		return NEW;
+	elsif (TG_OP = 'DELETE') then
+		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s''', TG_TABLE_NAME, TG_OP) using OLD;
+		return OLD;	
+	end if;		
+end;
+$$ language plpgsql;
 
 -- function to create history table for some table t
 create or replace function make_history_table(t text) returns void as $$
@@ -149,12 +176,12 @@ create table keywords (
 select make_history_table('keywords');
 
 drop type if exists document_type cascade;
-create type document_type as enum ('letter', 'other');
+create type document_type as enum ('letter', 'sales_contract', 'authorization', 'other');
 
 drop table if exists documents cascade;
 create table documents (
 	id int primary key default nextval('unique_object_id_seq'),
-	signatory char(7) not null,	
+	signature char(8) not null,	
 	type document_type not null default 'letter',
 	date_year int,
 	date_month int check (date_month between 1 and 12),
@@ -219,26 +246,26 @@ create table document_places (
 );
 select make_history_table('document_places');
 
-drop table if exists document_authors cascade;
-create table document_authors (
+drop table if exists document_primary_agents cascade;
+create table document_primary_agents (
 	document int references documents(id) on update cascade,
 	person int references persons(id) on update cascade,	
 	primary key (document, person)
 );
-select make_history_table('document_authors');
+select make_history_table('document_primary_agents');
 
-drop table if exists document_addresses cascade;
-create table document_addresses (
+drop table if exists document_recipients cascade;
+create table document_recipients (
 	document int references documents(id) on update cascade,
 	person int references persons(id) on update cascade,
 	place int references places(id) on update cascade,
 	has_forwarded boolean not null default false,
 	primary key (document, person)
 );
-select make_history_table('document_addresses');
+select make_history_table('document_recipients');
 
 drop type if exists person_role cascade;
-create type person_role as enum ('scribe', 'attestor', 'other', 'sending_greetings', 'receiving_greetings');
+create type person_role as enum ('scribe', 'attestor', 'sending_greetings', 'receiving_greetings', 'secondary_recipient', 'other');
 
 drop table if exists document_persons cascade;
 create table document_persons (
@@ -306,27 +333,10 @@ create table user_sessions (
 	timestamp timestamp not null default current_timestamp
 );
 
--- function to automatically insert or delete parent object for objects with history
--- OUTDATED AS OF v1.09, but we MUST leave it here so the trigger assignments work
-create or replace function update_history_table() returns trigger as $$
-begin	
-	if (TG_OP = 'INSERT') then
-		execute format('insert into %s_history select ($1).*, now(), ''%s'' ', TG_TABLE_NAME, TG_OP) using NEW;
-		return NEW;
-	elsif (TG_OP = 'DELETE') then
-		execute format('insert into %s_history select ($1).*, now(), ''%s''', TG_TABLE_NAME, TG_OP) using OLD;
-		return OLD;
-	elsif (TG_OP = 'UPDATE') then
-		execute format('insert into %s_history select ($1).*, now(), ''%s''', TG_TABLE_NAME, TG_OP) using NEW;
-		return NEW;
-	end if;		
-end;
-$$ language plpgsql;
-
 -- view for all things that be an object that references a source
 create or replace view citing_objects as 
         (        (         select documents.id, 
-                            documents.signatory || ' (Document)' as name
+                            documents.signature || ' (Document)' as name
                            from documents
                 union 
                          select places.id, 
@@ -364,8 +374,13 @@ begin
 			when 'ṣ' then 's'
 			when 'ẓ' then 'z'
 			when 'ḷ' then 'l'	
+			
+			when '̄' then ''
+			when '̣' then ''
+			
 			--when 'ʿ' then ''''
 			--when 'ʾ' then ''''
+			
 			when ' ' then E'\011' -- \011 is horizontal tab, needed as word separator because blanks are removed for whatever reason!!!
 			else c 
 		end);
@@ -374,9 +389,6 @@ begin
 end;
 $$ language plpgsql;
 
-
--- v1.07 START
--- recent changes unified from all *_history tables
 drop type if exists recent_changes cascade;
 create type recent_changes as(
 	table_name varchar(50),
@@ -407,19 +419,14 @@ language 'plpgsql';
 
 create or replace view recent_changes_list as select * from get_recent_changes() order by timestamp desc;
 
--- v1.08
-drop table if exists document_author_groups cascade;
-create table document_author_groups (
+drop table if exists document_primary_agent_groups cascade;
+create table document_primary_agent_groups (
 	document int references documents(id) on update cascade,
 	person_group int references person_groups(id) on update cascade,	
 	primary key (document, person_group)
 );
-select make_history_table('document_author_groups');
+select make_history_table('document_primary_agent_groups');
 
---alter type person_role add value 'sending_greetings';
---alter type person_role add value 'receiving_greetings';
-
--- v1.09
 create or replace view view_changes_by_user as
 select user_id, (select role from users where id=user_id) user_role, count(*) num_changes, min(timestamp) first_change, max(timestamp) last_change 
 from recent_changes_list 
@@ -428,26 +435,5 @@ group by user_id, user_role
 order by count(*) desc;
 
 alter table persons add constraint person_name_unique unique (lastname_translit, forename_translit, byname_translit);
-
--- alter the update_history_table trigger to work regardless of column order
-create or replace function update_history_table() returns trigger as $$
-declare
-	column_list text;
-begin	
-	select array_to_string(array_agg(quote_ident(column_name)), ', ') 
-	from information_schema.columns
-	where table_schema = 'public' and table_name = quote_ident(TG_TABLE_NAME)
-	into column_list;
-		
-	if (TG_OP in ('INSERT', 'UPDATE')) then
-		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s'' ', TG_TABLE_NAME, TG_OP) using NEW;
-		return NEW;
-	elsif (TG_OP = 'DELETE') then
-		execute format('insert into %s_history ('|| column_list ||', edit_timestamp, edit_action) select ($1).*, now(), ''%s''', TG_TABLE_NAME, TG_OP) using OLD;
-		return OLD;	
-	end if;		
-end;
-$$ language plpgsql;
-
 alter table documents add column translation text;
 alter table documents_history add column translation text;
