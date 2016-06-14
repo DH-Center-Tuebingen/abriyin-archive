@@ -17,13 +17,7 @@
 	// ========================================================================================================
 	function alhamra_render_main_page() {
 	// ========================================================================================================		
-		//echo '<p>Choose an action from the top menu.</p>';		
-		//echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";
-		
-		echo '<div style="width:100%; height:750px; position:relative" id="cy"></div>';
-		#echo db_diagram_get_js('cy');
-		echo db_network_get_js('cy');
-		
+		echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";		
 		echo "<div style='width:270px' class='center'><a href='http://escience.uni-tuebingen.de'><img src='images/escience-logo-transparent.svg'></img></a></div>";		
 	}
 	
@@ -34,6 +28,43 @@
 		if(isset($_GET['mode']) && ($_GET['mode'] == MODE_LIST || $_GET['mode'] == MODE_VIEW))
 			return preg_replace('/(\p{Arabic}+(\s+\p{Arabic}+)*)/u', '<span lang="ar">$1</span>', $html);
 		return $html;
+	}
+	
+	// ========================================================================================================
+	function alhamra_network_persons_documents() {
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		
+		echo '<h3>Network of Persons, Person Groups and Documents</h3>';
+		echo '<div class="fill-height" id="network">Sit tight, I\'m working...</div>';
+
+		$network_setup = array(
+			'nodes' => array(				
+				'persons' => array(				
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen')),
+					'display' => $CUSTOM_VARIABLES['person_name_display'],
+					'fields' => array(
+						'group_memberships' => array('arrows' => '')
+					)
+				),
+				'documents' => array(				
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf12e', 'color' => 'navy')),
+					'display' => 'signature',
+					'fields' => array(
+						'primary_agents' => array('arrows' => 'from'),
+						'primary_agent_groups' => array('arrows' => 'from'),
+						'recipients' => array('arrows' => 'to')
+					)
+				),
+				'person_groups' => array(
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47c', 'color' => 'darkred')),
+					'display' => 'name_translit',
+				)
+			)
+		);
+		
+		echo visjs_get_network('network', $network_setup);
+		echo '<script>adjust_div_full_height();</script>';
 	}
 	
 	// ========================================================================================================
@@ -264,12 +295,16 @@
 		if(count($history_menu['items']) > 0)
 			$menu[]= $history_menu;
 		
-		/*$extras_menu = array('name' => 'Extras', 'items' => array());
+		$extras_menu = array('name' => 'Extras', 'items' => array());
+		$extras_menu['items'][] = array(
+			'label' => 'Network of Persons and Documents',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
+		);
 		
-		$extras_menu['items'][] = '<li><a href="?table=view_changes_by_user&amp;mode='.MODE_LIST.'">Changes By User</a></li>';
-		$TABLES['view_changes_by_user'] = $CUSTOM_VARIABLES['extra_tables']['view_changes_by_user'];
-		
-		$menu[] = $extras_menu;		*/
+		$menu[] = $extras_menu;
 	}
 	
 	// ========================================================================================================
