@@ -36,7 +36,7 @@
 		global $CUSTOM_VARIABLES;
 		
 		echo '<h3>Network of Persons, Person Groups and Documents</h3>';
-		echo '<div class="fill-height" id="network">Sit tight, I\'m working...</div>';
+		echo '<div class="fill-height" id="network"></div>';
 
 		$network_setup = array(
 			'nodes' => array(				
