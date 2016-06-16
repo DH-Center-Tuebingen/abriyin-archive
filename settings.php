@@ -143,7 +143,8 @@
 		'custom_related_list_proc' => 'alhamra_custom_related_list',
 		'preprocess_html_func' => 'alhamra_preprocess_html',
 		'additional_callable_plugin_functions' => array(
-			'alhamra_network_persons_documents'
+			'alhamra_network_persons_documents',
+			'alhamra_network_persons_via_documents'
 		)
 	);
 	

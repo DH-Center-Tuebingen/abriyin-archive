@@ -31,29 +31,46 @@
 	}
 	
 	// ========================================================================================================
+	function alhamra_network($title, $description, $network_js) {
+	// ========================================================================================================
+		echo '<h3>' . html($title) . '</h3>';
+		if($description != '') 
+			echo '<p>' . $description . '</p>';
+		echo '<div class="fill-height" id="network"></div>';
+		echo $network_js;
+		echo '<script>adjust_div_full_height();</script>';
+	}
+	
+	
+	// ========================================================================================================
 	function alhamra_network_persons_documents() {
 	// ========================================================================================================
 		global $CUSTOM_VARIABLES;
 		
-		echo '<h3>Network of Persons, Person Groups and Documents</h3>';
-		echo '<div class="fill-height" id="network"></div>';
-
 		$network_setup = array(
 			'nodes' => array(				
 				'persons' => array(				
 					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen')),
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'fields' => array(
-						'group_memberships' => array('arrows' => '')
+						'group_memberships' => array(
+							'options' => array('arrows' => '')
+						)
 					)
 				),
 				'documents' => array(				
 					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf12e', 'color' => 'navy')),
 					'display' => 'signature',
 					'fields' => array(
-						'primary_agents' => array('arrows' => 'from'),
-						'primary_agent_groups' => array('arrows' => 'from'),
-						'recipients' => array('arrows' => 'to')
+						'primary_agents' => array(
+							'options' => array('arrows' => 'from')
+						),
+						'primary_agent_groups' => array(
+							'options' => array('arrows' => 'from')
+						),
+						'recipients' => array(
+							'options' => array('arrows' => 'to')
+						)
 					)
 				),
 				'person_groups' => array(
@@ -63,9 +80,33 @@
 			)
 		);
 		
-		echo visjs_get_network('network', $network_setup);
-		echo '<script>adjust_div_full_height();</script>';
+		alhamra_network(
+			'Network of Persons, Person Groups and Documents', 
+			'Network of primary agents, primary agent groups, and recipients of documents.',
+			visjs_get_network_from_settings('network', $network_setup));
 	}
+	
+	// ========================================================================================================
+	function alhamra_network_persons_via_documents() {
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		
+		$node_icons = array(
+			'persons' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen'))
+		);
+		
+		$network_js = visjs_get_network_from_node_and_edge_lists(
+			'network', 
+			'network_nodes_persons_via_documents', 
+			'network_edges_persons_via_documents',
+			$node_icons);
+		
+		alhamra_network(
+			'Communication Network', 
+			'Network of persons and person groups connected via documents as primary agents, members of primary agent groups, recipients, or related persons.',
+			$network_js);
+	}
+	
 	
 	// ========================================================================================================
 	function alhamra_after_delete($table_name, $table_info, $primary_key_values) {
@@ -302,6 +343,13 @@
 				'mode' => MODE_PLUGIN, 
 				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
 				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
+		);
+		$extras_menu['items'][] = array(
+			'label' => 'Communication Network',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
 		);
 		
 		$menu[] = $extras_menu;
