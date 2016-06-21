@@ -124,7 +124,10 @@
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
-		'plugins' => array('alhamra.php', 'calendar.php', 'visjs.plugin.php'),
+		'plugins' => array(
+			'alhamra.php', 
+			'calendar.php', 
+			'visjs' => 'visjs.plugin.php'),
 		'page_icon' => 'images/uni-tuebingen.ico',		
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
@@ -141,10 +144,10 @@
 		'list_mincolwidth_max' => 300,
 		'list_mincolwidth_pxperchar' => 6,
 		'custom_related_list_proc' => 'alhamra_custom_related_list',
-		'preprocess_html_func' => 'alhamra_preprocess_html',
+		'preprocess_html_func' => 'alhamra_preprocess_html',		
 		'additional_callable_plugin_functions' => array(
 			'alhamra_network_persons_documents',
-			'alhamra_network_persons_via_documents'
+			'alhamra_network_persons_via_documents'			
 		)
 	);
 	

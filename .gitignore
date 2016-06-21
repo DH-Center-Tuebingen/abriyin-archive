@@ -3,3 +3,5 @@ db/db_users.sql
 db/db_backups
 scans
 scans/**
+cache
+cache/**

@@ -1,5 +1,105 @@
 <?
 	// ========================================================================================================
+	// for caching, the plugin calls itself with POST parameters
+	if(isset($_POST['visjs_internal_proc'])) {
+	// ========================================================================================================
+		switch($_POST['method']) {
+			//~~~~~~~~~~~~~~~~~~~~~
+			case 'poll_node_cache':
+			//~~~~~~~~~~~~~~~~~~~~~
+				// check whether we need to put node positions cache
+				header('Content-Type: text/plain');
+				if(!@file_exists($dir . '/' . $network_id . '.node_positions'))
+					echo '1'; // need put cache
+				else
+					echo '0'; // no need to put cache
+				exit;
+			
+			//~~~~~~~~~~~~~~~~~~~~
+			case 'put_node_cache':	
+			//~~~~~~~~~~~~~~~~~~~~
+				// write node positions cache
+				header('Content-Type: text/plain');
+				$network_id = $_POST['network_id'];
+				
+				$dir = visjs_settings('cache_dir');
+				// check whether node positions already exist
+				if(@file_exists($dir . '/' . $network_id . '.node_positions'))
+					exit;
+				
+				// otherwise make file
+				$node_pos = '<script>' . $_POST['node_positions'] . '</script>';
+				@file_put_contents($dir . '/' . $network_id . '.node_positions', $node_pos);
+				echo 'OK';
+				exit;
+		}
+		exit;
+	}
+
+	// ========================================================================================================
+	// Adjust those settings if you like :-)
+	function visjs_settings($item = null) {
+	// ========================================================================================================	
+		static $settings = array(
+			// version (increment with any change that affects caching)
+			'plugin_version' => 1,
+			
+			// where to put cached networks. must not end with slash
+			'cache_dir' => 'cache',
+			
+			// weight of the edge is multiplied with this term
+			'edge_width_multiplier' => 1.5,
+			
+			// some default options that may be used
+			'default_options' => array(				
+				'layout' => array(
+					#'randomSeed' => 2,
+					'improvedLayout' => true
+				),
+				'interaction' => array(
+					'dragNodes' => true,
+					'hover' => true
+				),
+				'physics'=> array(
+					'solver' => 'forceAtlas2Based',
+					'stabilization' => array(
+						'iterations' => 300,
+						'updateInterval' => 50
+					),
+					'adaptiveTimestep' => true,
+					/*'forceAtlas2Based' => array(
+						'springLength' => 100,
+						'springConstant' => .08,
+						'gravitationalConstant' => -50,
+						'centralGravity' => .01
+					)/**/
+				),							
+				'nodes' => array(
+					'font' => '16px arial black',
+					'icon' => array(
+						'size' => 75
+					),
+					'scaling' => array(
+						'label' => array(
+							'min' => 12,
+							'max' => 20
+						)	
+					)
+				),
+				'edges' => array(					
+					'smooth' => array('type' => 'dynamic'),
+					'color' => '#888888',
+					'font' => '11px arial #888888',
+					'hoverWidth' => 3,
+					'selectionWidth' => 3
+				)
+			)
+		);
+		
+		return $item !== null ? $settings[$item] : $settings;
+	}
+
+	// ========================================================================================================
 	function visjs_node_id($table, $id) {
 	// ========================================================================================================
 		return $table . '#' . $id;
@@ -50,7 +150,7 @@
 				'id' 	=> $edge_id,
 				'from' 	=> visjs_node_id($from_table, $from_id),
 				'to' 	=> visjs_node_id($to_table, $to_id),
-				'width' => intval($weight) * 1.5,
+				'width' => intval($weight) * visjs_settings('edge_width_multiplier'),
 				'label' => $label				
 			);
 			
@@ -69,15 +169,76 @@
 	}
 	
 	// ========================================================================================================
+	// returns null if no cache found, otherwise cached page text	
+	function visjs_get_cache($network_id, $time_to_live) {
+	// ========================================================================================================
+		if($time_to_live === 0 || isset($_GET['nocache']))
+			return false;
+		
+		$dir = visjs_settings('cache_dir');
+		
+		// read cache
+		$t = @filemtime($dir . '/' . $network_id . '.definition');
+		
+		if($t === false) // probably does not exist yet
+			return false;
+			
+		if(time() - $t > $time_to_live) // cache expired
+			return false;
+			
+		$cache = @file_get_contents($dir . '/' . $network_id . '.definition');
+		if($cache === false)
+			return false;
+		
+		// check version
+		if(preg_match('/^<!-- (?P<ver>\d+) -->\n/', $cache, $matches) !== 1) 
+			return false; // can't find version info
+		
+		if(!isset($matches['ver']))
+			return false;
+		
+		if(intval($matches['ver']) < visjs_settings('plugin_version'))
+			return false; // this code is newer version -> don't return cache
+		
+		$pos = @file_get_contents($dir . '/' . $network_id . '.node_positions');
+		if($pos !== false)
+			$cache .= $pos;
+		
+		return $cache;
+	}
+	
+	// ========================================================================================================
+	function visjs_put_cache($network_id, $content) {
+	// ========================================================================================================
+		$dir = visjs_settings('cache_dir');
+		
+		if(!@is_dir($dir))
+			@mkdir($dir);
+		
+		// remove stored node positions (if any)
+		@unlink($dir . '/' . $network_id . '.node_positions');
+		
+		// make version
+		$version = "<!-- " . visjs_settings('plugin_version') . " -->\n";
+		
+		return @file_put_contents($dir . '/' . $network_id . '.definition', $version . $content);
+	}
+	
+	// ========================================================================================================
 	function visjs_get_network_from_node_and_edge_lists(
+		$network_id, // name used for caching
 		$div_id,	 // div where to put the network
 		$nodes_view, // columns: id, label, table
 		$edges_view, // columns: from_id, to_id, from_table, to_table, weight, label, direction {csv of {from,to,middle})
 		$node_icons  // node icon options
 	) {
 	// ========================================================================================================
-		global $TABLES;
+		$cache = visjs_get_cache($network_id, 3600);
+		if($cache !== false)
+			return $cache;
 		
+		global $TABLES;
+				
 		$db = db_connect();
 		if($db === false)
 			return proc_error('Cannot connect to DB.');
@@ -118,19 +279,26 @@
 		$groups = array();
 		foreach($node_icons as $table_name => $node_options)
 			$groups[$table_name] = $node_options;
-			
-		$groups = str_replace('\\\\', '\\', json_encode($groups));
 		
-		// network physics iterations before network is shown
-		$stab_iterations = 200;
-		$stab_updateInterval = 25;
+		$options = array_merge(visjs_settings('default_options'), array('groups' => $groups));		
 		
-		return visjs_network_get_script($div_id, $nodes, $edges, $groups, $stab_iterations, $stab_updateInterval);
+		$network_js = visjs_network_get_script($network_id, $div_id, $nodes, $edges, $options);
+		visjs_put_cache($network_id, $network_js);
+		
+		return $network_js;
 	}
 	
 	// ========================================================================================================
-	function visjs_get_network_from_settings($div_id, $network_setup) {
+	function visjs_get_network_from_settings(
+		$network_id, // name used for caching
+		$div_id, 
+		$network_setup) 
+	{
 	// ========================================================================================================
+		$cache = visjs_get_cache($network_id, 3600);
+		if($cache !== false)
+			return $cache;
+		
 		global $TABLES;
 		
 		$db = db_connect();
@@ -282,78 +450,60 @@
 		$groups = array();
 		foreach($network_setup['nodes'] as $table_name => $table_info)
 			$groups[$table_name] = $table_info['shape'];
-			
-		$groups = str_replace('\\\\', '\\', json_encode($groups));
 		
-		// network physics iterations before network is shown
-		$stab_iterations = 400;
-		$stab_updateInterval = 25;
+		$options = array_merge(visjs_settings('default_options'), array('groups' => $groups));
 		
-		return visjs_network_get_script($div_id, $nodes, $edges, $groups, $stab_iterations, $stab_updateInterval);
+		$network_js = visjs_network_get_script($network_id, $div_id, $nodes, $edges, $options);
+		visjs_put_cache($network_id, $network_js);
+		
+		return $network_js;
 	}
 	
 	// ========================================================================================================
-	function visjs_network_get_script($div_id, &$nodes, &$edges, &$groups, $stab_iterations, $stab_updateInterval) {
+	function visjs_network_get_script($network_id, $div_id, &$nodes, &$edges, $options) {
 	// ========================================================================================================
+		global $APP;
+		$options = str_replace('\\\\', '\\', json_encode($options));
+		
+		$def_options = visjs_settings('default_options');
+		$iterations = $def_options['physics']['stabilization']['iterations'];
+		$self_script = $APP['plugins']['visjs'];
+		
 		$js = <<<EOT
 		<div id="network-loading-progress" class="progress">
-			<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="$stab_iterations" style="width:0%"></div>
+			<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="$iterations" style="width:0%"></div>
 		</div>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js'></script>		
 		<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css' type='text/css' />
 		<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" />
 		<script>
+		var network;
+		var stabilization_cancelled = false;
+		
 		document.addEventListener('DOMContentLoaded', function() {
 			var container = document.getElementById('$div_id');	
 
 			var data = {
 				nodes: new vis.DataSet([ $nodes ]),
 				edges: new vis.DataSet([ $edges ])
-			};			
-			var options = {				
-				layout: {
-					improvedLayout: false
-				},
-				interaction: {
-					dragNodes: true,
-					hover: true
-				},
-				physics: {
-					solver: 'forceAtlas2Based',
-					stabilization: {
-						iterations: $stab_iterations,
-						updateInterval : $stab_updateInterval
-					},
-				},
-				
-				groups: $groups,
-				
-				nodes: {
-					font : '16px arial black',
-					icon: {
-						size: 75
-					},
-					scaling: {
-						label: {
-							min:12,
-							max:20
-						}	
-					}
-				},
-				edges: {
-					color: '#888888',
-					font: '11px arial #888888',
-					hoverWidth: 3,
-					selectionWidth: 3
-				}
 			};
 			
-			var progress_bar = jQuery('#network-loading-progress')
-				.offset(jQuery(container).offset())
-				.css('width', jQuery(container).width())
-				.toggle();
+			var options = $options;
 			
-			var network = new vis.Network(container, data, options);
+			var progress_bar = null;
+			
+			if(typeof set_node_positions === 'function') { // we'll come from the cache, yo!
+				options.physics = false;
+				options.edges['smooth'] = {type: 'continuous'}; // dynamic edges have invisible nodes that spoil the drawing
+			}
+			else {			
+				progress_bar = jQuery('#network-loading-progress')
+					.offset(jQuery(container).offset())
+					.css('width', jQuery(container).width())
+					.toggle();
+			}
+			
+			network = new vis.Network(container, data, options);
 			
 			network.on('doubleClick', function(arg) {
 				var clicked_item = null;
@@ -379,19 +529,61 @@
 			network.once('stabilizationIterationsDone', function() {
 				setTimeout(function() {
 					progress_bar.find('div')						
-						.attr('aria-valuenow', $stab_iterations)
+						.attr('aria-valuenow', $iterations)
 						.css('width', '100%')
 						.html('Network is still stabilizing, but ready to explore. <a style="" id="stop_simu" href="javascript:void(0)">Stop stabilization</a>');
 						
 					$('#stop_simu').on('click', function() {
 						network.stopSimulation();
+						stabilization_cancelled = true;
 					});
 				}, 0);
 			});
 			
 			network.on('stabilized', function(arg) {
 				progress_bar.hide();
+				
+				if(!stabilization_cancelled) {
+					stabilization_cancelled = true; // we do this only once
+					// put node cache
+					$.post(
+						'$self_script', 
+						{
+							visjs_internal_proc: 'yeah',
+							method: 'poll_node_cache', 
+							network_id: '$network_id' 
+						},
+						function(data) {
+							console.log('poll node position cache: ' + data);
+							if(data != '1')
+								return;
+							
+							// build cache data
+							var pos_js = 'function set_node_positions() { network.setOptions({physics: {enabled:false}}); stabilization_cancelled = true; var node_positions = '; 
+							var pos_xy = network.getPositions();
+							pos_js += JSON.stringify(pos_xy);
+							pos_js += '; for(var node_id in node_positions) { ';
+							pos_js += 'if(!node_positions.hasOwnProperty(node_id)) continue; ';
+							pos_js += 'network.moveNode(node_id, node_positions[node_id].x, node_positions[node_id].y);'
+							pos_js += '} network.fit(); } ';
+							
+							$.post('$self_script', { 
+								visjs_internal_proc: 'yeah',
+								method: 'put_node_cache',
+								network_id: '$network_id',
+								node_positions: pos_js
+							},
+							function(data) {
+								console.log('caching returns: ' + data);
+							});
+						}
+					);
+				}
 			});
+			
+			
+			if(typeof set_node_positions === 'function')
+				set_node_positions();
 			
 			/*network.on('oncontext', function(arg) {				
 				var node_id = network.getNodeAt(arg.pointer.DOM);

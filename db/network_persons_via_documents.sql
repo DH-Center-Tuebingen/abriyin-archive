@@ -6,7 +6,7 @@ select
 	'persons'::char(7) from_table,
 	'persons'::char(7) to_table,
 	sum(c) weight,
-	sum(c) || ' shared documents'::char "label",
+	sum(c)::varchar "label",
 	''::char direction
 from (
 --  recipients with document senders

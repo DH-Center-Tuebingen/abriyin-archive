@@ -80,10 +80,15 @@
 			)
 		);
 		
+		$network_js = visjs_get_network_from_settings(
+			'alhamra_network_persons_documents',
+			'network', 
+			$network_setup);
+		
 		alhamra_network(
 			'Network of Persons, Person Groups and Documents', 
 			'Network of primary agents, primary agent groups, and recipients of documents.',
-			visjs_get_network_from_settings('network', $network_setup));
+			$network_js);
 	}
 	
 	// ========================================================================================================
@@ -96,6 +101,7 @@
 		);
 		
 		$network_js = visjs_get_network_from_node_and_edge_lists(
+			'alhamra_network_persons_via_documents',
 			'network', 
 			'network_nodes_persons_via_documents', 
 			'network_edges_persons_via_documents',
