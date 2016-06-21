@@ -82,12 +82,13 @@
 		
 		$network_js = visjs_get_network_from_settings(
 			'alhamra_network_persons_documents',
+			3600,
 			'network', 
 			$network_setup);
 		
 		alhamra_network(
 			'Network of Persons, Person Groups and Documents', 
-			'Network of primary agents, primary agent groups, and recipients of documents.',
+			'Network of primary agents, primary agent groups, and recipients of documents. Note that for performance reasons this network is updated only once per hour.',
 			$network_js);
 	}
 	
@@ -102,6 +103,7 @@
 		
 		$network_js = visjs_get_network_from_node_and_edge_lists(
 			'alhamra_network_persons_via_documents',
+			3600,
 			'network', 
 			'network_nodes_persons_via_documents', 
 			'network_edges_persons_via_documents',
@@ -109,7 +111,7 @@
 		
 		alhamra_network(
 			'Communication Network', 
-			'Network of persons and person groups connected via documents as primary agents, members of primary agent groups, recipients, or related persons.',
+			'Network of persons and person groups connected via documents as primary agents, members of primary agent groups, recipients, or related persons.  Note that for performance reasons this network is updated only once per hour.',
 			$network_js);
 	}
 	

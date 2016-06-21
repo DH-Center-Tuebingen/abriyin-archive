@@ -212,8 +212,12 @@
 	// ========================================================================================================
 		$dir = visjs_settings('cache_dir');
 		
-		if(!@is_dir($dir))
-			@mkdir($dir);
+		if(!@is_dir($dir)) {
+			if(!@mkdir($dir, 0777, true)) {
+				$error = error_get_last();				
+				proc_error($error['message']);
+			}
+		}
 		
 		// remove stored node positions (if any)
 		@unlink($dir . '/' . $network_id . '.node_positions');
@@ -227,13 +231,14 @@
 	// ========================================================================================================
 	function visjs_get_network_from_node_and_edge_lists(
 		$network_id, // name used for caching
+		$cache_ttl,  // cache time to live in seconds (0 to disable cache)
 		$div_id,	 // div where to put the network
 		$nodes_view, // columns: id, label, table
 		$edges_view, // columns: from_id, to_id, from_table, to_table, weight, label, direction {csv of {from,to,middle})
 		$node_icons  // node icon options
 	) {
 	// ========================================================================================================
-		$cache = visjs_get_cache($network_id, 3600);
+		$cache = visjs_get_cache($network_id, $cache_ttl);
 		if($cache !== false)
 			return $cache;
 		
@@ -291,11 +296,12 @@
 	// ========================================================================================================
 	function visjs_get_network_from_settings(
 		$network_id, // name used for caching
+		$cache_ttl,  // cache time to live in seconds (0 to disable cache)
 		$div_id, 
 		$network_setup) 
 	{
 	// ========================================================================================================
-		$cache = visjs_get_cache($network_id, 3600);
+		$cache = visjs_get_cache($network_id, $cache_ttl);
 		if($cache !== false)
 			return $cache;
 		
