@@ -308,9 +308,27 @@
 		global $TABLES;		
 		global $CUSTOM_VARIABLES;
 		
-		if($_SESSION['user_data']['role'] != 'admin')
-			return;
+		$extras_menu = array('name' => 'Extras', 'items' => array());
+		$extras_menu['items'][] = array(
+			'label' => 'Network of Persons and Documents',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
+		);
+		$extras_menu['items'][] = array(
+			'label' => 'Communication Network',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
+		);
 		
+		if($_SESSION['user_data']['role'] != 'admin') {
+			$menu[] = $extras_menu;
+			return;
+		}
+			
 		if($menu[1]['name'] != 'Browse & Edit') { // just to be sure
 			echo 'Need to update alhamra_menu_complete()';
 			return;
@@ -343,22 +361,6 @@
 		
 		if(count($history_menu['items']) > 0)
 			$menu[]= $history_menu;
-		
-		$extras_menu = array('name' => 'Extras', 'items' => array());
-		$extras_menu['items'][] = array(
-			'label' => 'Network of Persons and Documents',
-			'href' => '?' . http_build_query(array(
-				'mode' => MODE_PLUGIN, 
-				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
-				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
-		);
-		$extras_menu['items'][] = array(
-			'label' => 'Communication Network',
-			'href' => '?' . http_build_query(array(
-				'mode' => MODE_PLUGIN, 
-				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
-				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
-		);
 		
 		$menu[] = $extras_menu;
 	}
