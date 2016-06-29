@@ -17,12 +17,7 @@
 	// ========================================================================================================
 	function alhamra_render_main_page() {
 	// ========================================================================================================		
-		//echo '<p>Choose an action from the top menu.</p>';		
-		//echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";
-		
-		echo '<div style="width:100%; height:300px; position:relative" id="cy"></div>';
-		echo db_diagram_get_js('cy');
-		
+		echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";		
 		echo "<div style='width:270px' class='center'><a href='http://escience.uni-tuebingen.de'><img src='images/escience-logo-transparent.svg'></img></a></div>";		
 	}
 	
@@ -34,6 +29,92 @@
 			return preg_replace('/(\p{Arabic}+(\s+\p{Arabic}+)*)/u', '<span dir="rtl" lang="ar">$1</span>', $html);
 		return $html;
 	}
+	
+	// ========================================================================================================
+	function alhamra_network($title, $description, $network_js) {
+	// ========================================================================================================
+		echo '<h3>' . html($title) . '</h3>';
+		if($description != '') 
+			echo '<p>' . $description . '</p>';
+		echo '<div class="fill-height" id="network"></div>';
+		echo $network_js;
+		echo '<script>adjust_div_full_height();</script>';
+	}
+	
+	
+	// ========================================================================================================
+	function alhamra_network_persons_documents() {
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		
+		$network_setup = array(
+			'nodes' => array(				
+				'persons' => array(				
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen')),
+					'display' => $CUSTOM_VARIABLES['person_name_display'],
+					'fields' => array(
+						'group_memberships' => array(
+							'options' => array('arrows' => '')
+						)
+					)
+				),
+				'documents' => array(				
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf12e', 'color' => 'navy')),
+					'display' => 'signature',
+					'fields' => array(
+						'primary_agents' => array(
+							'options' => array('arrows' => 'from')
+						),
+						'primary_agent_groups' => array(
+							'options' => array('arrows' => 'from')
+						),
+						'recipients' => array(
+							'options' => array('arrows' => 'to')
+						)
+					)
+				),
+				'person_groups' => array(
+					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47c', 'color' => 'darkred')),
+					'display' => 'name_translit',
+				)
+			)
+		);
+		
+		$network_js = visjs_get_network_from_settings(
+			'alhamra_network_persons_documents',
+			3600,
+			'network', 
+			$network_setup);
+		
+		alhamra_network(
+			'Network of Persons, Person Groups and Documents', 
+			'Network of primary agents, primary agent groups, and recipients of documents. Note that for performance reasons this network is updated only once per hour.',
+			$network_js);
+	}
+	
+	// ========================================================================================================
+	function alhamra_network_persons_via_documents() {
+	// ========================================================================================================
+		global $CUSTOM_VARIABLES;
+		
+		$node_icons = array(
+			'persons' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen'))
+		);
+		
+		$network_js = visjs_get_network_from_node_and_edge_lists(
+			'alhamra_network_persons_via_documents',
+			3600,
+			'network', 
+			'network_nodes_persons_via_documents', 
+			'network_edges_persons_via_documents',
+			$node_icons);
+		
+		alhamra_network(
+			'Communication Network', 
+			'Network of persons and person groups connected via documents as primary agents, members of primary agent groups, recipients, or related persons.  Note that for performance reasons this network is updated only once per hour.',
+			$network_js);
+	}
+	
 	
 	// ========================================================================================================
 	function alhamra_after_delete($table_name, $table_info, $primary_key_values) {
@@ -227,9 +308,27 @@
 		global $TABLES;		
 		global $CUSTOM_VARIABLES;
 		
-		if($_SESSION['user_data']['role'] != 'admin')
-			return;
+		$extras_menu = array('name' => 'Extras', 'items' => array());
+		$extras_menu['items'][] = array(
+			'label' => 'Network of Persons and Documents',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
+		);
+		$extras_menu['items'][] = array(
+			'label' => 'Communication Network',
+			'href' => '?' . http_build_query(array(
+				'mode' => MODE_PLUGIN, 
+				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
+				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
+		);
 		
+		if($_SESSION['user_data']['role'] != 'admin') {
+			$menu[] = $extras_menu;
+			return;
+		}
+			
 		if($menu[1]['name'] != 'Browse & Edit') { // just to be sure
 			echo 'Need to update alhamra_menu_complete()';
 			return;
@@ -263,12 +362,7 @@
 		if(count($history_menu['items']) > 0)
 			$menu[]= $history_menu;
 		
-		/*$extras_menu = array('name' => 'Extras', 'items' => array());
-		
-		$extras_menu['items'][] = '<li><a href="?table=view_changes_by_user&amp;mode='.MODE_LIST.'">Changes By User</a></li>';
-		$TABLES['view_changes_by_user'] = $CUSTOM_VARIABLES['extra_tables']['view_changes_by_user'];
-		
-		$menu[] = $extras_menu;		*/
+		$menu[] = $extras_menu;
 	}
 	
 	// ========================================================================================================
