@@ -309,6 +309,16 @@
 		global $CUSTOM_VARIABLES;
 		
 		$extras_menu = array('name' => 'Extras', 'items' => array());
+		
+		if($_SESSION['user_data']['role'] == 'admin') {
+			$extras_menu['items'][] = array(
+				'label' => 'Query the Database',
+				'href' => '?' . http_build_query(array(
+					'mode' => MODE_QUERY, 
+					PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON))
+			);
+		}
+		
 		$extras_menu['items'][] = array(
 			'label' => 'Network of Persons and Documents',
 			'href' => '?' . http_build_query(array(
