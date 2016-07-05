@@ -310,7 +310,7 @@
 		
 		$extras_menu = array('name' => 'Extras', 'items' => array());
 		
-		if($_SESSION['user_data']['role'] == 'admin') {
+		if($_SESSION['user_data']['role'] == 'admin' && $_SESSION['user_id'] == 1) {
 			$extras_menu['items'][] = array(
 				'label' => 'Query the Database',
 				'href' => '?' . http_build_query(array(
