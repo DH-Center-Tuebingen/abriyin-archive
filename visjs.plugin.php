@@ -475,11 +475,12 @@
 		$iterations = $def_options['physics']['stabilization']['iterations'];
 		$self_script = $APP['plugins']['visjs'];
 		
+		add_javascript('https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js');
+		
 		$js = <<<EOT
 		<div id="network-loading-progress" class="progress">
 			<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="$iterations" style="width:0%"></div>
-		</div>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js'></script>		
+		</div>		
 		<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css' type='text/css' />
 		<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" />
 		<script>
