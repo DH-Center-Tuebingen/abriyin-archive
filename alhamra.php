@@ -313,9 +313,7 @@
 		if($_SESSION['user_data']['role'] == 'admin' && $_SESSION['user_id'] == 1) {
 			$extras_menu['items'][] = array(
 				'label' => 'Query the Database',
-				'href' => '?' . http_build_query(array(
-					'mode' => MODE_QUERY, 
-					PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON))
+				'href' => '?' . http_build_query(array('mode' => MODE_QUERY))
 			);
 		}
 		
