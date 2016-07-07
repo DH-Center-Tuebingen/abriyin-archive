@@ -515,4 +515,17 @@
 			}
 		}
 	}
+	
+	// ========================================================================================================
+	function /*bool*/ alhamra_querypage_check_permission() {
+	// ========================================================================================================
+		// arriving here, we know that a user is logged in
+		
+		// every logged in user can view a query visualization
+		if(QueryPage::is_stored_query())
+			return true;
+		
+		// only admins can make and share queries
+		return $_SESSION['user_data']['role'] === 'admin';
+	}
 ?>

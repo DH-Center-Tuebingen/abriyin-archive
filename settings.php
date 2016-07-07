@@ -148,7 +148,9 @@
 		'additional_callable_plugin_functions' => array(
 			'alhamra_network_persons_documents',
 			'alhamra_network_persons_via_documents'			
-		)
+		),
+		'querypage_stored_queries_table' => 'stored_queries',
+		'querypage_permission_func' => 'alhamra_querypage_check_permission'
 	);
 	
 	/* ========================================================================================================	*/
