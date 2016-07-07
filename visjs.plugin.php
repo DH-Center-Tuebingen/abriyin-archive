@@ -169,6 +169,14 @@
 	}
 	
 	// ========================================================================================================
+	function visjs_add_meta_scripts() {
+	// ========================================================================================================
+		add_javascript('https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js');
+		add_stylesheet('https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css');
+		add_stylesheet('https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css');
+	}
+	
+	// ========================================================================================================
 	// returns null if no cache found, otherwise cached page text	
 	function visjs_get_cache($network_id, $time_to_live) {
 	// ========================================================================================================
@@ -238,6 +246,8 @@
 		$node_icons  // node icon options
 	) {
 	// ========================================================================================================
+		visjs_add_meta_scripts();
+		
 		$cache = visjs_get_cache($network_id, $cache_ttl);
 		if($cache !== false)
 			return $cache;
@@ -301,6 +311,8 @@
 		$network_setup) 
 	{
 	// ========================================================================================================
+		visjs_add_meta_scripts();
+		
 		$cache = visjs_get_cache($network_id, $cache_ttl);
 		if($cache !== false)
 			return $cache;
@@ -474,10 +486,6 @@
 		$def_options = visjs_settings('default_options');
 		$iterations = $def_options['physics']['stabilization']['iterations'];
 		$self_script = $APP['plugins']['visjs'];
-		
-		add_javascript('https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js');
-		add_stylesheet('https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.css');
-		add_stylesheet('https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css');
 		
 		$js = <<<EOT
 		<div id="network-loading-progress" class="progress">
