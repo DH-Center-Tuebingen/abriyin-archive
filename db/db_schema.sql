@@ -137,7 +137,7 @@ create table places (
 	name_translit varchar(50) not null,
 	name_arabic varchar(50),
 	information text,
-	coordinates geometry(geometry,4326),
+	coordinates geometry(geometry, 32640), -- WGS 84 / UTM zone 40N
 	type place_type not null default 'settlement',
 	country_region int not null references countries_and_regions(id) on update cascade,
 	edit_note text,	
