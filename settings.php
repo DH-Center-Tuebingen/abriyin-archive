@@ -685,7 +685,7 @@
 				'name_arabic' => array('label' => 'Arabic Name', 'type' => T_TEXT_LINE, 'len' => 50),				
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
 				
-				'coordinates' => array('label' => 'Coordinates', 'type' => T_POSTGIS_GEOM, 'SRID' => '32640', 'help' => 'Enter the <a href="https://en.wikipedia.org/wiki/Well-known_text">well-known text (WKT)</a> representation of any geometry, e.g. <code>POINT(501760.32 4649776.22)</code>. See also <a href="http://postgis.net/docs/ST_GeomFromText.html" target="_blank">here</a> for help. The spatial reference system is <a href="https://epsg.io/32640">EPSG:32640 (WGS 84 / UTM zone 40N)</a>.'),
+				'coordinates' => array('label' => 'Coordinates', 'type' => T_POSTGIS_GEOM, 'SRID' => '32640', 'help' => 'Enter the <a href="https://en.wikipedia.org/wiki/Well-known_text">well-known text (WKT)</a> representation of any POINT geometry, e.g. <code>POINT(501760.32 4649776.22)</code>. See also <a href="http://postgis.net/docs/ST_GeomFromText.html" target="_blank">here</a> for help. The spatial reference system is <a href="https://epsg.io/32640">EPSG:32640 (WGS 84 / UTM zone 40N)</a>.'),
 				
 				'country_region' => array('label' => 'Country/Region', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,

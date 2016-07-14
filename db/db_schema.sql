@@ -28,6 +28,7 @@
 --          TABLE NAME CHANGES: document_authors => document_primary_agents, document_author_groups => document_primary_agent_groups,
 --             document_addresses => document_recipients
 -- v1.11 MD 20160606 update dmg_plain for diacritics that come as dedicated characters (who knows why?)
+-- v1.12 MD 20160714 Table and user for setting coordinates of places in QGIS
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -437,3 +438,27 @@ order by count(*) desc;
 alter table persons add constraint person_name_unique unique (lastname_translit, forename_translit, byname_translit);
 alter table documents add column translation text;
 alter table documents_history add column translation text;
+
+-- for location setting via QGIS we need a separate table that stores coordinates and references the respective place. Places are then updated with a trigger
+drop table if exists verortung cascade;
+create table verortung (
+  id serial primary key,
+  geom geometry(Point,32640),
+  place integer unique not null
+);
+
+create or replace function set_place_coordinates() returns trigger as
+$BODY$
+BEGIN
+	if TG_OP = 'INSERT' then
+		update places set coordinates = NEW.geom where id = NEW.place;
+		return NEW;	
+	end if;    
+END;
+$BODY$
+language plpgsql;
+
+drop trigger if exists trigger_vertortung_to_places on verortung;
+create trigger trigger_vertortung_to_places 
+	after insert on verortung 
+	for each row execute procedure set_place_coordinates();

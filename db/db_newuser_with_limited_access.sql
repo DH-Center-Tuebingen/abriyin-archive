@@ -7,3 +7,4 @@ grant usage on schema public to XXX;
 grant all on table a, b to XXX;
 grant select on table c, d to XXX;
 grant usage on all sequences in schema public to XXX;
+grant select on all tables in schema public to verorter;
