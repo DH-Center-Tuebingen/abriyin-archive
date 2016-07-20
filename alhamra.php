@@ -310,6 +310,7 @@
 		
 		$extras_menu = array('name' => 'Extras', 'items' => array());
 		
+		// create stored queries
 		if($_SESSION['user_data']['role'] == 'admin' && $_SESSION['user_id'] == 1) {
 			$extras_menu['items'][] = array(
 				'label' => 'Query the Database',
@@ -317,6 +318,23 @@
 			);
 		}
 		
+		// stored queries item
+		$stored_queries_list = array(
+			'label' => 'Show Stored Queries',
+			'href' => '?' . http_build_query(array('table' => 'stored_queries', 'mode' => MODE_LIST))
+		);
+		
+		if($_SESSION['user_data']['role'] == 'admin')
+			$TABLES['stored_queries']['actions'] = array(MODE_LINK, MODE_EDIT, MODE_VIEW, MODE_LIST, MODE_DELETE);
+		else {
+			$TABLES['stored_queries']['actions'] = array(MODE_LINK, MODE_LIST);		
+			$TABLES['stored_queries']['fields']['id']['list_hide'] = true;
+		}
+		
+		$extras_menu['items'][] = $stored_queries_list;
+		$extras_menu['items'][] = '<li class="divider"></li>';
+		
+		// obsolete >> 
 		$extras_menu['items'][] = array(
 			'label' => 'Network of Persons and Documents',
 			'href' => '?' . http_build_query(array(
@@ -331,6 +349,7 @@
 				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
 				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
 		);
+		// <<
 		
 		if($_SESSION['user_data']['role'] != 'admin') {
 			$menu[] = $extras_menu;
