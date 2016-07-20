@@ -324,11 +324,13 @@
 			'href' => '?' . http_build_query(array('table' => 'stored_queries', 'mode' => MODE_LIST))
 		);
 		
-		if($_SESSION['user_data']['role'] == 'admin')
-			$TABLES['stored_queries']['actions'] = array(MODE_LINK, MODE_EDIT, MODE_VIEW, MODE_LIST, MODE_DELETE);
-		else {
+		if($_SESSION['user_data']['role'] != 'admin') {
 			$TABLES['stored_queries']['actions'] = array(MODE_LINK, MODE_LIST);		
-			$TABLES['stored_queries']['fields']['id']['list_hide'] = true;
+			#$TABLES['stored_queries']['fields']['id']['list_hide'] = true;
+			$TABLES['stored_queries']['fields']['params_json']['list_hide'] = true;			
+		}
+		else {
+			$TABLES['stored_queries']['render_links'][] = array('icon' => 'export', 'field' => 'id', 'href_format' => '?mode=query&navbar=on&view=full&id=%s', 'title' => 'Open this stored query in editor');
 		}
 		
 		$extras_menu['items'][] = $stored_queries_list;

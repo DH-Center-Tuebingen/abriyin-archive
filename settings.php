@@ -201,7 +201,9 @@
 			'hooks' => array(
 				'before_insert' => 'alhamra_before_insert_or_update',
 				'before_update' => 'alhamra_before_insert_or_update'),
-			'render_link' => array('field' => 'filepath', 'href_format' => '%s', 'title' => 'Show this scan'),
+			'render_links' => array(
+				array('icon' => 'eye-open', 'field' => 'filepath', 'href_format' => '%s', 'title' => 'Show this scan')
+			),
 			'fields' => array(
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
 				'filename' => array('label' => 'File', 'type' => T_UPLOAD, 'required' => true, 'max_size' => 10485760, 'location' => 'scans', 'store' => STORE_FOLDER /*could be extended to STORE_DB to store the file binary in database*/, 'allowed_ext' => array('jpg', 'jpeg'), 'help' => 'Upload <i>.jpg</i> or <i>.jpeg</i> images only. The filename must be unique and reflect the signature of the document.'),
@@ -866,7 +868,27 @@
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-
+		
+		// ----------------------------------------------------------------------------------------------------
+		'stored_queries' => array(
+			'actions' => array(MODE_LINK, MODE_VIEW, MODE_EDIT, MODE_LIST, MODE_DELETE), // these are updated based on user role in alhamra.php plugin
+			'display_name' => 'Stored Queries',
+			'description' => 'A <b>stored query</b> allows you to view a live visualization of a database query result based on current data.',
+			'sort' => array('title' => 'asc'),
+			'item_name' => 'Stored Query',		
+			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('id')),
+			'render_links' => array(
+				array('icon' => 'eye-open', 'field' => 'id', 'href_format' => '?mode=query&navbar=on&id=%s', 'title' => 'Show visualization of stored query')
+			),
+			'fields' => array(
+				'title' => array('label' => 'Title', 'type' => T_TEXT_LINE),
+				'description' => array('label' => 'Description', 'type' => T_TEXT_AREA),
+				'id' => array('label' => 'ID', 'type' => T_TEXT_LINE, 'editable' => false),
+				'params_json' => array('label' => 'JSON Params', 'type' => T_TEXT_AREA),
+				'create_time' => array('label' => 'Timestamp', 'type' => T_TEXT_LINE, 'editable' => false)
+			)
+		),
 		
 		// ----------------------------------------------------------------------------------------------------
 		// n:m tables that will only be visible in history mode
@@ -953,24 +975,6 @@
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
-			)
-		),
-		
-		// ========== STORED QUERIES
-		'stored_queries' => array(
-			'actions' => array(), // these are set based on user role in alhamra.php plugin
-			'display_name' => 'Stored Queries',
-			'description' => 'A <b>stored query</b> allows you to view a live visualization of a database query result based on current data.',
-			'sort' => array('title' => 'asc'),
-			'item_name' => 'Stored Query',		
-			'show_in_related' => false,
-			'primary_key' => array('auto' => false, 'columns' => array('id')),
-			'render_link' => array('field' => 'id', 'href_format' => '?mode=query&navbar=on&id=%s', 'title' => 'Show visualization of stored query'),
-			'fields' => array(
-				'id' => array('label' => 'ID', 'type' => T_TEXT_LINE, 'editable' => false),
-				'title' => array('label' => 'Title', 'type' => T_TEXT_LINE),
-				'description' => array('label' => 'Description', 'type' => T_TEXT_AREA),
-				'create_time' => array('label' => 'Timestamp', 'type' => T_TEXT_LINE, 'editable' => false)
 			)
 		),
 	);
