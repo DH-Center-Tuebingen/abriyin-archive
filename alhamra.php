@@ -31,92 +31,6 @@
 	}
 	
 	// ========================================================================================================
-	function alhamra_network($title, $description, $network_js) {
-	// ========================================================================================================
-		echo '<h3>' . html($title) . '</h3>';
-		if($description != '') 
-			echo '<p>' . $description . '</p>';
-		echo '<div class="fill-height" id="network"></div>';
-		echo $network_js;
-		echo '<script>adjust_div_full_height();</script>';
-	}
-	
-	
-	// ========================================================================================================
-	function alhamra_network_persons_documents() {
-	// ========================================================================================================
-		global $CUSTOM_VARIABLES;
-		
-		$network_setup = array(
-			'nodes' => array(				
-				'persons' => array(				
-					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen')),
-					'display' => $CUSTOM_VARIABLES['person_name_display'],
-					'fields' => array(
-						'group_memberships' => array(
-							'options' => array('arrows' => '')
-						)
-					)
-				),
-				'documents' => array(				
-					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf12e', 'color' => 'navy')),
-					'display' => 'signature',
-					'fields' => array(
-						'primary_agents' => array(
-							'options' => array('arrows' => 'from')
-						),
-						'primary_agent_groups' => array(
-							'options' => array('arrows' => 'from')
-						),
-						'recipients' => array(
-							'options' => array('arrows' => 'to')
-						)
-					)
-				),
-				'person_groups' => array(
-					'shape' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47c', 'color' => 'darkred')),
-					'display' => 'name_translit',
-				)
-			)
-		);
-		
-		$network_js = visjs_get_network_from_settings(
-			'alhamra_network_persons_documents',
-			3600,
-			'network', 
-			$network_setup);
-		
-		alhamra_network(
-			'Network of Persons, Person Groups and Documents', 
-			'Network of primary agents, primary agent groups, and recipients of documents. Note that for performance reasons this network is updated only once per hour.',
-			$network_js);
-	}
-	
-	// ========================================================================================================
-	function alhamra_network_persons_via_documents() {
-	// ========================================================================================================
-		global $CUSTOM_VARIABLES;
-		
-		$node_icons = array(
-			'persons' => array('shape' => 'icon', 'icon' => array('face' => 'Ionicons', 'code' => '\uf47e', 'color' => 'darkgreen'))
-		);
-		
-		$network_js = visjs_get_network_from_node_and_edge_lists(
-			'alhamra_network_persons_via_documents',
-			3600,
-			'network', 
-			'network_nodes_persons_via_documents', 
-			'network_edges_persons_via_documents',
-			$node_icons);
-		
-		alhamra_network(
-			'Communication Network', 
-			'Network of persons and person groups connected via documents as primary agents, members of primary agent groups, recipients, or related persons.  Note that for performance reasons this network is updated only once per hour.',
-			$network_js);
-	}
-	
-	
-	// ========================================================================================================
 	function alhamra_after_delete($table_name, $table_info, $primary_key_values) {
 	// in the _history tables, we overwrite the last editor (only set on insert/update) with the current editor
 	// ========================================================================================================
@@ -333,27 +247,32 @@
 			$TABLES['stored_queries']['render_links'][] = array('icon' => 'export', 'field' => 'id', 'href_format' => '?mode=query&navbar=on&view=full&id=%s', 'title' => 'Open this stored query in editor');
 		}
 		
-		$extras_menu['items'][] = $stored_queries_list;
-		$extras_menu['items'][] = '<li class="divider"></li>';
+		$extras_menu['items'][] = $stored_queries_list;		
 		
-		// obsolete >> 
-		$extras_menu['items'][] = array(
-			'label' => 'Network of Persons and Documents',
-			'href' => '?' . http_build_query(array(
-				'mode' => MODE_PLUGIN, 
-				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
-				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_documents'))
+		$featured_queries = array(
+			'NjRHJyhI6TjO' => 'Network of Persons and Documents',
+			'nADglu04RgpM' => 'Communication Network',
+			'araJkEFefCfM' => 'Map of Places',
+			'NKJZDUriSEdY' => 'Timeline of Documents'
 		);
-		$extras_menu['items'][] = array(
-			'label' => 'Communication Network',
-			'href' => '?' . http_build_query(array(
-				'mode' => MODE_PLUGIN, 
-				PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON, 
-				PLUGIN_PARAM_FUNC => 'alhamra_network_persons_via_documents'))
-		);
-		// <<
 		
-		if($_SESSION['user_data']['role'] != 'admin') {
+		if(count($featured_queries) > 0) {
+			$extras_menu['items'][] = '<li class="divider"></li>';
+			$extras_menu['items'][] = '<li class="dropdown-header center">FEATURED VISUALIZATIONS</li>';
+			 
+			foreach($featured_queries as $q_id => $q_label) {
+				$extras_menu['items'][] = array(
+					'label' => $q_label,
+					'href' => '?' . http_build_query(array(
+						'mode' => MODE_QUERY, 
+						PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON,
+						QUERY_PARAM_VIEW => QUERY_VIEW_RESULT,
+						QUERY_PARAM_ID => $q_id))
+				);
+			}
+		}
+		
+		if(count($extras_menu['items']) > 0 && $_SESSION['user_data']['role'] != 'admin') {
 			$menu[] = $extras_menu;
 			return;
 		}
