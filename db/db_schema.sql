@@ -29,6 +29,7 @@
 --             document_addresses => document_recipients
 -- v1.11 MD 20160606 update dmg_plain for diacritics that come as dedicated characters (who knows why?)
 -- v1.12 MD 20160714 Table and user for setting coordinates of places in QGIS
+-- v1.13 MD 20160727 natural sort function
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -462,3 +463,11 @@ drop trigger if exists trigger_vertortung_to_places on verortung;
 create trigger trigger_vertortung_to_places 
 	after insert on verortung 
 	for each row execute procedure set_place_coordinates();
+	
+-- found at https://gist.github.com/veob/7378ad925cc962d34de3
+create or replace function naturalsort(text)
+returns bytea language sql immutable strict as
+$f$ 
+	select string_agg(convert_to(coalesce(r[2], length(length(r[1])::text) || length(r[1])::text || r[1]), 'SQL_ASCII'), '\x00')
+	from regexp_matches($1, '0*([0-9]+)|([^0-9]+)', 'g') r; 
+$f$;

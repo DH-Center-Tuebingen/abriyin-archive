@@ -224,7 +224,7 @@
 				'before_insert' => 'alhamra_before_insert_or_update',
 				'before_update' => 'alhamra_before_insert_or_update'),
 			'fields' => array(
-				'signature' => array('label' => 'Signature', 'type' => T_TEXT_LINE, 'len' => 7, 'required' => true,  
+				'signature' => array('label' => 'Signature', 'type' => T_TEXT_LINE, 'len' => 7, 'required' => true, 'sort_expr' => 'naturalsort(%s)',
 					'help' =>	'<p>The signature consists of a maximum of 7 characters, including a hyphen. '.
 								'There are max. 4 signs <b>before</b> the hyphen, thereof when indicated one letter, '.
 								'e.g., <code>A1</code>, <code>B13</code>, <code>D148</code>. '.

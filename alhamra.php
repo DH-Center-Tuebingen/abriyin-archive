@@ -253,7 +253,8 @@
 			'NjRHJyhI6TjO' => 'Network of Persons and Documents',
 			'nADglu04RgpM' => 'Communication Network',
 			'araJkEFefCfM' => 'Map of Places',
-			'NKJZDUriSEdY' => 'Timeline of Documents'
+			'NKJZDUriSEdY' => 'Timeline of Documents',
+			'Ge287xnvkgia' => 'Timeline of Daily Edits'
 		);
 		
 		if(count($featured_queries) > 0) {
