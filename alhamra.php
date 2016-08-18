@@ -18,7 +18,8 @@
 	function alhamra_render_main_page() {
 	// ========================================================================================================		
 		echo "<p><img class='img-rounded img-responsive' src='images/letters.jpg'></img></p>";		
-		echo "<div style='width:270px' class='center'><a href='http://escience.uni-tuebingen.de'><img src='images/escience-logo-transparent.svg'></img></a></div>";		
+		echo "<p class='text-center'><a href='http://escience.uni-tuebingen.de'><img src='images/escience-logo-transparent.svg' width='270'></img></a></div>";	
+		echo "<p class='text-muted small text-center'>★ <a href='https://github.com/eScienceCenter/abriyin-archive'>Source Code on GitHub</a>. Built with <a href='https://github.com/eScienceCenter/dbWebGen'>dbWebGen</a> ★</p>";
 	}
 	
 	// ========================================================================================================
