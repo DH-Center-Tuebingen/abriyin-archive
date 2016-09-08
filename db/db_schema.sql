@@ -1,4 +1,4 @@
-﻿-- v1.01 MD added triggers and function for automatic object_with_history creation
+-- v1.01 MD added triggers and function for automatic object_with_history creation
 -- v1.02 MD places.coordinates as Postgis geometry
 -- v1.03 MD replace spaces with underscores in ENUM values
 -- v1.04 MD added on update cascade rules to all foreign keys; 
@@ -30,6 +30,9 @@
 -- v1.11 MD 20160606 update dmg_plain for diacritics that come as dedicated characters (who knows why?)
 -- v1.12 MD 20160714 Table and user for setting coordinates of places in QGIS
 -- v1.13 MD 20160727 natural sort function
+-- v1.14 MD 20160908 increase page and volume to varchar(200) in bibliographic_references
+
+-- =========================================================================================================
 
 -- this sequence is important for the history tables. we need "globally" unique IDs for all tables
 -- that shall keep a history
@@ -322,8 +325,8 @@ drop table if exists bibliographic_references cascade;
 create table bibliographic_references (
 	object int,
 	source int references sources(id) on update cascade,
-	page varchar(10),
-	volume varchar(10),
+	page varchar(200),
+	volume varchar(200),
 	primary key (object, source)
 );
 select make_history_table('bibliographic_references');

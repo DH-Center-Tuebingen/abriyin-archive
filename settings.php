@@ -860,8 +860,8 @@
 						'related_label' => 'Details Of Bibliographic References To This Source'
 					)
 				),
-				'volume' => array('label' => 'Volume', 'type' => T_TEXT_LINE, 'len' => 10),
-				'page' => array('label' => 'Page', 'type' => T_TEXT_LINE, 'len' => 10),
+				'volume' => array('label' => 'Volume(s)', 'type' => T_TEXT_LINE, 'len' => 100),
+				'page' => array('label' => 'Page(s)', 'type' => T_TEXT_LINE, 'len' => 100),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
