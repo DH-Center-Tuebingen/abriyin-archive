@@ -191,7 +191,7 @@
 		'scans' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Scans',
-			'description' => 'A <b>scan</b> is a photo or scan of a document (or a document page). Scans can be assigned to documents. The maximum photo file size is 10 MB.',
+			'description' => 'A <b>scan</b> is a photo or scan of a document (or a document page). Scans can be assigned to documents. The maximum photo file size is 10 MB. <b>Note:</b> Uploaded media are not being backed up, so please make sure to retain a copy of the media you are uploading.',
 			'item_name' => 'Scan',
 			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('filename' => 'asc'),
