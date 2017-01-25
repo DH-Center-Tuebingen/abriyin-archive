@@ -1,35 +1,35 @@
-<?	
+<?
 	/* ========================================================================================================	*/
 	// These $CUSTOM_VARIABLES entries are helper variables
 	$CUSTOM_VARIABLES['islam_months'] = array(
-		1 => '1. Muḥarram', 
-		2 => '2. Ṣafar', 
-		3 => '3. Rabīʿ I', 
-		4 => '4. Rabīʿ II', 
-		5 => '5. Ǧumādā I', 
-		6 => '6. Ǧumādā II', 
-		7 => '7. Raǧab' , 
-		8 => '8. Šaʿbān', 
-		9 => '9. Ramaḍān', 
-		10 => '10. Šawwāl', 
-		11 => '11. Ḏū ‘l-qaʿda', 
+		1 => '1. Muḥarram',
+		2 => '2. Ṣafar',
+		3 => '3. Rabīʿ I',
+		4 => '4. Rabīʿ II',
+		5 => '5. Ǧumādā I',
+		6 => '6. Ǧumādā II',
+		7 => '7. Raǧab' ,
+		8 => '8. Šaʿbān',
+		9 => '9. Ramaḍān',
+		10 => '10. Šawwāl',
+		11 => '11. Ḏū ‘l-qaʿda',
 		12 => '12. Ḏū ‘l-ḥiǧǧa'
 	);
-		
+
 	$CUSTOM_VARIABLES['person_name_display'] = array(
-		'columns' => array('lastname_translit', 'forename_translit', 'byname_translit'), 
+		'columns' => array('lastname_translit', 'forename_translit', 'byname_translit'),
 		'expression' => "concat_ws(', ', %1, %2, %3)"
 	);
-	
+
 	$CUSTOM_VARIABLES['all_actions'] = array(MODE_EDIT, MODE_NEW, MODE_VIEW, MODE_LIST, MODE_DELETE, MODE_LINK);
-	
+
 	$CUSTOM_VARIABLES['history'] = array(
-		'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'reset' => false /* not sure */, 'help' => 'This is an informal field that you can use to leave personal editoral comments and notes (e.g. what you are unclear about)'),				
+		'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'reset' => false /* not sure */, 'help' => 'This is an informal field that you can use to leave personal editoral comments and notes (e.g. what you are unclear about)'),
 		'edit_status' => array('label' => 'Editing Status', 'type' => T_ENUM, 'required' => true, 'default' => 'editing', 'help' => 'While you are editing the document set the status to <b>Editing</b>. When you are done editing and feel the record is ready for review, set to <b>Editing finished</b>. If you are unclear about any field or information set the status to <b>Unclear</b> and put an explanatory comment or note in the <i>Editing note</i> field. The status <b>Approved</b> should only be set by the seminar leaders.',
-			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved')),	
+			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved')),
 		'edit_user' => array('label' => 'Last Editor', 'type' => T_LOOKUP, 'editable' => false, 'default' => REPLACE_DYNAMIC_SESSION_USER, 'lookup' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'users', 'field' => 'id', 'display' => 'name'))
 	);
-	
+
 	// note: for all these tables, an after_insert hook will be automatically added in alhamra_menu_complete
 	$CUSTOM_VARIABLES['tables_with_history'] = array(
 		'bibliographic_references',
@@ -38,7 +38,7 @@
 		'document_persons',
 		'document_to_document_references',
 		'documents',
-		'keywords',			
+		'keywords',
 		'person_groups',
 		'person_places',
 		'person_relatives',
@@ -55,13 +55,13 @@
 		'person_of_group',
 		'person_group_places'
 	);
-	
+
 	$CUSTOM_VARIABLES['help_details_edit'] = 'Details of each assignment can be edited by clicking the <span class="glyphicon glyphicon-th-list"></span> icon.';
-	
+
 	$CUSTOM_VARIABLES['arabic_dates'] = 'These are Islamic dates. If available, fill in the <i>Year</i>, <i>Month</i>, and <i>Day</i> fields. If none of those are available, try to provide a date range by filling in the <i>Year From</i> and/or the <i>Year To</i> fields.';
-	
+
 	$CUSTOM_VARIABLES['arabic_dates_fromto'] = 'These are Islamic dates. If available provide a date range by filling in the either or both of the <i>From Year</i> and the <i>To Year</i> fields.';
-	
+
 	$CUSTOM_VARIABLES['fk'] = array(
 		'document' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'documents', 'field' => 'id', 'display' => 'signature'),
 		'scan' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'scans', 'field' => 'id', 'display' => 'filename'),
@@ -70,7 +70,7 @@
 		'place' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'places', 'field' => 'id', 'display' => 'name_translit'),
 		'keyword' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'keywords', 'field' => 'id', 'display' => 'keyword'),
 	);
-	
+
 	// only for admins
 	$CUSTOM_VARIABLES['extra_tables'] = array(
 		'view_changes_by_user' => array(
@@ -78,18 +78,18 @@
 			'display_name' => 'Changes By User',
 			'description' => '',
 			'item_name' => 'Change By User',
-			'primary_key' => array('auto' => false, 'columns' => array('user_id')),		
+			'primary_key' => array('auto' => false, 'columns' => array('user_id')),
 			'sort' => array('num_changes' => 'desc'),
 			'show_in_related' => false,
-			'fields' => array(				
-				'user_id' => array('label' => 'User', 'type' => T_LOOKUP, 
+			'fields' => array(
+				'user_id' => array('label' => 'User', 'type' => T_LOOKUP,
 					'lookup' => array(
-						'cardinality' => CARDINALITY_SINGLE, 
-						'table' => 'users', 
-						'field' => 'id', 
+						'cardinality' => CARDINALITY_SINGLE,
+						'table' => 'users',
+						'field' => 'id',
 						'display' => 'name')),
 				'num_changes' => array('label' => '# Changes', 'type' => T_TEXT_LINE),
-				'user_role' => array('label' => 'Role', 'type' => T_ENUM, 'values' => array('user' => 'User', 'admin' => 'Admin')),				
+				'user_role' => array('label' => 'Role', 'type' => T_ENUM, 'values' => array('user' => 'User', 'admin' => 'Admin')),
 				'first_change' => array('label' => 'First Change', 'type' => T_TEXT_LINE),
 				'last_change' => array('label' => 'Last Change', 'type' => T_TEXT_LINE)
 			)
@@ -99,19 +99,19 @@
 			'display_name' => 'All Recent Changes',
 			'description' => 'Recent changes made by users in the database. Actions are either INSERT (new record), UPDATE (edited record) and DELETE (removed record). To see details of each change, please go to the editing history of the table mentioned in the "History Table" column.',
 			'item_name' => 'Change',
-			'primary_key' => array('auto' => false, 'columns' => array('table_name', 'history_id')), 
+			'primary_key' => array('auto' => false, 'columns' => array('table_name', 'history_id')),
 			'sort' => array('timestamp' => 'desc'),
 			'custom_actions' => array(
 				array('mode' => MODE_LIST, 'handler' => 'alhamra_recent_changes_item_view')
 			),
 			'show_in_related' => false,
-			'fields' => array(		
-				'timestamp' => array('label' => 'Timestamp', 'type' => T_TEXT_LINE),				
-				'user_id' => array('label' => 'Editor', 'type' => T_LOOKUP, 
+			'fields' => array(
+				'timestamp' => array('label' => 'Timestamp', 'type' => T_TEXT_LINE),
+				'user_id' => array('label' => 'Editor', 'type' => T_LOOKUP,
 					'lookup' => array(
-						'cardinality' => CARDINALITY_SINGLE, 
-						'table' => 'users', 
-						'field' => 'id', 
+						'cardinality' => CARDINALITY_SINGLE,
+						'table' => 'users',
+						'field' => 'id',
 						'display' => 'name')),
 				'action' => array('label' => 'Action', 'type' => T_TEXT_LINE),
 				'table_name' => array('label' => 'History Table', 'type' => T_TEXT_LINE),
@@ -119,15 +119,15 @@
 			)
 		)
 	);
-	
-	
+
+
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
 		'plugins' => array(
-			'alhamra.php', 
+			'alhamra.php',
 			'calendar.php'),
-		'page_icon' => 'images/uni-tuebingen.ico',		
+		'page_icon' => 'images/uni-tuebingen.ico',
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
 		'page_size'	=> 10,
@@ -143,16 +143,16 @@
 		'list_mincolwidth_max' => 300,
 		'list_mincolwidth_pxperchar' => 6,
 		'custom_related_list_proc' => 'alhamra_custom_related_list',
-		'preprocess_html_func' => 'alhamra_preprocess_html',		
+		'preprocess_html_func' => 'alhamra_preprocess_html',
 		'additional_callable_plugin_functions' => array(),
 		'querypage_stored_queries_table' => 'stored_queries',
 		'querypage_permission_func' => 'alhamra_querypage_check_permission',
 		'cache_dir' => 'cache'
 	);
-	
+
 	/* ========================================================================================================	*/
 	require_once 'db/db.php';
-	
+
 	/* ========================================================================================================	*/
 	$LOGIN = array(
 		'users_table' => 'users',
@@ -164,18 +164,18 @@
 		'allow_change_password' => true,
 		'form' => array('username' => 'Email', 'password' => 'Password'),
 		'initializer_proc' => 'alhamra_permissions',
-		'login_success_proc' => 'alhamra_login_success'		
+		'login_success_proc' => 'alhamra_login_success'
 	);
-	
+
 	/* ========================================================================================================	*/
-	$TABLES = array(	
+	$TABLES = array(
 		// ----------------------------------------------------------------------------------------------------
 		'users' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Users',
 			'description' => 'A <b>user</b> can log into the ʿAbrīyīn Archive and perform actions based on his/her assigned role.',
 			'item_name' => 'User',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),		
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('name' => 'asc'),
 			'fields' => array(
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
@@ -186,7 +186,7 @@
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'scans' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -202,24 +202,24 @@
 				array('icon' => 'eye-open', 'field' => 'filepath', 'href_format' => '%s', 'title' => 'Show this scan')
 			),
 			'fields' => array(
-				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
+				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
 				'filename' => array('label' => 'File', 'type' => T_UPLOAD, 'required' => true, 'max_size' => 10485760, 'location' => 'scans', 'store' => STORE_FOLDER /*could be extended to STORE_DB to store the file binary in database*/, 'allowed_ext' => array('jpg', 'jpeg'), 'help' => 'Upload <i>.jpg</i> or <i>.jpeg</i> images only. The filename must be unique and reflect the signature of the document.'),
 				'filepath' => array('label' => 'Path', 'type' => T_TEXT_LINE, 'len' => 1000, 'editable' => false),
 				'filesize' => array('label' => 'Size', 'type' => T_NUMBER, 'editable' => false),
-				'filetype' => array('label' => 'Type', 'type' => T_TEXT_LINE, 'len' => 100, 'editable' => false),				
+				'filetype' => array('label' => 'Type', 'type' => T_TEXT_LINE, 'len' => 100, 'editable' => false),
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
-			)			
+			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'documents' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Documents',
 			'description' => 'A <b>document</b> reflects a letter or other kind of document in the archive and its associated data.',
 			'item_name' => 'Document',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),		
-			'sort' => array('signature' => 'asc'),			
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
+			'sort' => array('signature' => 'asc'),
 			'hooks' => array(
 				'before_insert' => 'alhamra_before_insert_or_update',
 				'before_update' => 'alhamra_before_insert_or_update'),
@@ -237,10 +237,10 @@
 								'<li><code>E18-3</code>: film E18, picture 3</li>'.
 								'</ul></p>'.
 								'<p><b>Attention!</b> The number figuring between the film number and the number of the pictures indicates the '.
-								'"<b>bundle</b>" to which the document belongs. This concerns only some of the documents.</p>'),				
+								'"<b>bundle</b>" to which the document belongs. This concerns only some of the documents.</p>'),
 				'pack_nr' => array('label' => 'Bundle Number', 'type' => T_NUMBER, 'help' => 'Number of the bundle, without leading zeros.'),
-				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
-				'scans' => array('label' => 'Scan Images', 'required' => false, 'type' => T_LOOKUP, 
+				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
+				'scans' => array('label' => 'Scan Images', 'required' => false, 'type' => T_LOOKUP,
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'scans',
@@ -252,18 +252,18 @@
 						'fk_self' => 'document',
 						'fk_other' => 'scan',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'default' => 'letter', 'values' => array('letter' => 'Letter', 'sales_contract' => 'Sales Contract', 'authorization' => 'Authorization', 'other' => 'Other'), 'help' => 'The type of document determines the kind person assigned in the <i>Primary Agents</i>, <i>Primary Agent Groups</i>, and <i>Recipients</i> fields'),				
-				'physical_location' => array('label' => 'Physical Location', 'type' => T_LOOKUP, 'required' => true, 
+				),
+				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'default' => 'letter', 'values' => array('letter' => 'Letter', 'sales_contract' => 'Sales Contract', 'authorization' => 'Authorization', 'other' => 'Other'), 'help' => 'The type of document determines the kind person assigned in the <i>Primary Agents</i>, <i>Primary Agent Groups</i>, and <i>Recipients</i> fields'),
+				'physical_location' => array('label' => 'Physical Location', 'type' => T_LOOKUP, 'required' => true,
 					'lookup' => array(
 						'cardinality' => CARDINALITY_SINGLE,
 						'table'  => 'places',
 						'field'  => 'id',
 						'display' => 'name_translit',
 						'default' => 30,
-						'related_label' => 'Documents Physically Located At This Place') 
-				),				
-				'primary_agents' => array('label' => 'Primary Agents', 'required' => false, 'type' => T_LOOKUP, 
+						'related_label' => 'Documents Physically Located At This Place')
+				),
+				'primary_agents' => array('label' => 'Primary Agents', 'required' => false, 'type' => T_LOOKUP,
 					'help' => 'The kind of primary agent of a document varies by document type. In a letter the primary agents are the senders; in a sales contract they are sellers; in an authorization document they are the principals. If a person group acts as primary agent of a document, pick this person group in the following field.',
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -277,14 +277,14 @@
 						'fk_other' => 'person',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
-						'controlled_by' => 'type',						
-						'mapping' => array(							
+						'controlled_by' => 'type',
+						'mapping' => array(
 							'sales_contract' => 'Primary Agents<br /><span class="small text-muted">Sellers</span>',
 							'authorization' => 'Primary Agents<br /><span class="small text-muted">Principals</span>',
 							'letter' => 'Primary Agents<br /><span class="small text-muted">Senders</span>'
 						)
 					)
-				),				
+				),
 				'primary_agent_groups' => array('label' => 'Primary Agent Groups', 'required' => false, 'type' => T_LOOKUP,
 					'help' => '<b>Attention</b>: This field is only to be filled in if a person group is the actual primary agent of a document. It is <b>not</b> to be filled to indicate the group affiliation of an individual agent.',
 					'lookup' => array(
@@ -299,15 +299,15 @@
 						'fk_other' => 'person_group',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
-						'controlled_by' => 'type',						
-						'mapping' => array(							
+						'controlled_by' => 'type',
+						'mapping' => array(
 							'sales_contract' => 'Primary Agent Groups<br /><span class="small text-muted">Seller Groups</span>',
 							'authorization' => 'Primary Agent Groups<br /><span class="small text-muted">Principal Groups</span>',
 							'letter' => 'Primary Agent Groups<br /><span class="small text-muted">Sender Groups</span>'
 						)
 					)
-				),				
-				'recipients' => array('label' => 'Recipients', 'type' => T_LOOKUP, 
+				),
+				'recipients' => array('label' => 'Recipients', 'type' => T_LOOKUP,
 					'help' => 'The kind of recipient of a document varies by document type. In a letter the recipients are the addressees; in a sales contract they are buyers; in an authorization document they are the agents. These assignments are stored in a separate table <a href="?table=document_recipients">Document Recipients</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -321,22 +321,22 @@
 						'fk_other' => 'person',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER)),
 					'conditional_form_label' => array(
-						'controlled_by' => 'type',						
-						'mapping' => array(							
+						'controlled_by' => 'type',
+						'mapping' => array(
 							'sales_contract' => 'Recipients<br /><span class="small text-muted">Buyers</span>',
 							'authorization' => 'Recipients<br /><span class="small text-muted">Authorized Agents</span>',
 							'letter' => 'Recipients<br /><span class="small text-muted">Addressees</span>'
 						)
 					)
-				),				
+				),
 				'date_year' => array('label' => 'Date: Year', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'date_month' => array('label' => 'Date: Month', 'type' => T_ENUM, 'values' => $CUSTOM_VARIABLES['islam_months'], 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'date_day' => array('label' => 'Date: Day', 'type' => T_NUMBER , 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'date_year_from' => array('label' => 'Date: Year From', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
-				'date_year_to' => array('label' => 'Date: Year To', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),				
+				'date_year_to' => array('label' => 'Date: Year To', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'gregorian_year_lower' => array('label' => 'Gregorian Year (Lower)', 'type' => T_NUMBER, 'editable' => false),
-				'gregorian_year_upper' => array('label' => 'Gregorian Year (Upper)', 'type' => T_NUMBER, 'editable' => false),												
-				'other_places' => array('label' => 'Other Places', 'type' => T_LOOKUP, 
+				'gregorian_year_upper' => array('label' => 'Gregorian Year (Upper)', 'type' => T_NUMBER, 'editable' => false),
+				'other_places' => array('label' => 'Other Places', 'type' => T_LOOKUP,
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'places',
@@ -348,8 +348,8 @@
 						'fk_self' => 'document',
 						'fk_other' => 'place',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'related_persons' => array('label' => 'Related Persons', 'type' => T_LOOKUP, 
+				),
+				'related_persons' => array('label' => 'Related Persons', 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign persons occurring in some role in this document. These assignments are stored in a separate table <a href="?table=document_persons">Persons in Documents</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -362,8 +362,8 @@
 						'fk_self' => 'document',
 						'fk_other' => 'person',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'document_to_document_references' => array('label' => 'Referenced Documents', 'type' => T_LOOKUP, 
+				),
+				'document_to_document_references' => array('label' => 'Referenced Documents', 'type' => T_LOOKUP,
 					'help' => 'Use this field to specify which other documents in the archive are referenced by this one. These are stored in a separate table <a href="?table=document_to_document_references">Document-to-Document References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -376,8 +376,8 @@
 						'fk_self' => 'source_doc',
 						'fk_other' => 'target_doc',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'keywords' => array('label' => 'Keywords', 'type' => T_LOOKUP, 
+				),
+				'keywords' => array('label' => 'Keywords', 'type' => T_LOOKUP,
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'keywords',
@@ -389,8 +389,8 @@
 						'fk_self' => 'document',
 						'fk_other' => 'keyword',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
+				),
+				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this document. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -403,7 +403,7 @@
 						'fk_self' => 'object',
 						'fk_other' => 'source',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
+				),
 				//'content' => array('label' => 'Content (XML)', 'type' => T_TEXT_AREA),
 				'summary' => array('label' => 'Summary', 'type' => T_TEXT_AREA),
 				'translation' => array('label' => 'English Translation', 'type' => T_TEXT_AREA),
@@ -418,48 +418,48 @@
 				'bibliographic_references' => array('label' => 'Bibliographic Reference', 'foreign_key' => 'object')
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'document_recipients' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Document Recipients Details',
 			'description' => '<b>Document recipient details</b> specifies details of each recipient of a document, i.e. destination address of a document and whether a recipient address was a forwarding address. These details can also be set in the <i>Recipients</i> field of the document editing form.',
-			'item_name' => 'Document Recipient Details',			
+			'item_name' => 'Document Recipient Details',
 			'primary_key' => array('auto' => false, 'columns' => array('document', 'person')),
 			'sort' => array('document' => 'asc', 'person' => 'asc'),
-			'fields' => array(				
+			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'required' => true, 'help' => 'The document for which you want to specify an addressee and destination place', 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signature',
 					'related_label' => 'Document Recipient Details')
-				),				
+				),
 				'person' => array('label' => 'Recipient', 'type' => T_LOOKUP, 'required' => true, 'help' => 'A person who is an addressee of the selected document', 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'related_label' => 'Document Recipient Details Where This Person Appears')
-				),				
+				),
 				'place' => array('label' => 'Address/Place', 'type' => T_LOOKUP, 'required' => false, 'help' => 'The destination address of the document for the selected person', 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'places',
 					'field'   => 'id',
 					'display' => 'name_translit',
 					'related_label' => 'Document Recipient Details Where This Place Appears')
-				),				
-				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_ENUM, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => '0', 'values' => array('1' => 'Yes', '0' => 'No')),				
+				),
+				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_ENUM, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => '0', 'values' => array('1' => 'Yes', '0' => 'No')),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-				
+
 		// ----------------------------------------------------------------------------------------------------
 		'persons' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Persons',
 			'description' => 'A <b>person</b> record captures personal data of people occurring in the archive. Persons are <a href="?table=document_persons">associated with documents</a> (e.g. as scribes, attestors, etc.), with <a href="?table=person_places">places where they live</a>, with <a href="?table=person_relatives">their relatives</a> (e.g. father, brother, etc.), and with <a href="?table=person_groups">person groups to which they belong</a> (e.g. their tribal unit).',
-			'item_name' => 'Person',			
+			'item_name' => 'Person',
 			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('lastname_translit' => 'asc', 'forename_translit' => 'asc'),
 			'hooks' => array(
@@ -469,14 +469,14 @@
 				'lastname_translit' => array('label' => 'Family name (translit.)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => false,
 					'help' => 'If the family name is missing, please enter "Unknown" here. If the family name is illegible, please enter "Unclear" and make an explanatory note in the field <i>Information</i>'),
 				'forename_translit' => array('label' => 'First name (translit.)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
-				'byname_translit' => array('label' => 'Byname (translit.)', 'type' => T_TEXT_LINE, 'len' => 50),				
-				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
-				'sex' => array('label' => 'Gender', 'type' => T_ENUM, 'required' => true, 'default' => 'm', 'values' => array('m' => 'Male', 'f' => 'Female')),				
+				'byname_translit' => array('label' => 'Byname (translit.)', 'type' => T_TEXT_LINE, 'len' => 50),
+				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
+				'sex' => array('label' => 'Gender', 'type' => T_ENUM, 'required' => true, 'default' => 'm', 'values' => array('m' => 'Male', 'f' => 'Female')),
 				'lastname_arabic' => array('label' => 'Family name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),
 				'forename_arabic' => array('label' => 'First name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),
 				'byname_arabic' => array('label' => 'Byname (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50 ),
-				'title' => array('label' => 'Title', 'type' => T_ENUM, 'values' => array('imām' => 'imām', 'sayyid' => 'sayyid', 'šayḫ' => 'šayḫ', 'wālī' => 'wālī')),				
-				'group_memberships' => array('label' => 'Person\'s Groups', 'type' => T_LOOKUP, 
+				'title' => array('label' => 'Title', 'type' => T_ENUM, 'values' => array('imām' => 'imām', 'sayyid' => 'sayyid', 'šayḫ' => 'šayḫ', 'wālī' => 'wālī')),
+				'group_memberships' => array('label' => 'Person\'s Groups', 'type' => T_LOOKUP,
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
 						'table' => 'person_groups',
@@ -488,12 +488,12 @@
 						'fk_self' => 'person',
 						'fk_other' => 'person_group',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
+				),
 				'birth_year' => array('label' => 'Birth Date: Year', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'birth_month' => array('label' => 'Birth Date: Month', 'type' => T_ENUM, 'values' => $CUSTOM_VARIABLES['islam_months'], 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'birth_day' => array('label' => 'Birth Date: Day', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'birth_year_from' => array('label' => 'Birth Date: Year From', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates'], 'help' => $CUSTOM_VARIABLES['arabic_dates']),
-				'birth_year_to' => array('label' => 'Birth Date: Year To', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),				
+				'birth_year_to' => array('label' => 'Birth Date: Year To', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
 				'gregorian_birth_year_lower' => array('label' => 'Gregorian Birth Year (Lower)', 'type' => T_NUMBER, 'editable' => false),
 				'gregorian_birth_year_upper' => array('label' => 'Gregorian Birth Year (Upper)', 'type' => T_NUMBER, 'editable' => false),
 				'death_year' => array('label' => 'Death Date: Year', 'type' => T_NUMBER, 'help' => $CUSTOM_VARIABLES['arabic_dates']),
@@ -514,7 +514,7 @@
 						'fk_self' => 'person',
 						'fk_other' => 'document')
 				),*/
-				'places_locations' => array('label' => 'Places/Locations', 'required' => false, 'type' => T_LOOKUP, 
+				'places_locations' => array('label' => 'Places/Locations', 'required' => false, 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign this person to places. These assignments are stored in a separate table <a href="?table=person_places">Places of Persons</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -528,7 +528,7 @@
 						'fk_other' => 'place',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
 				),
-				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
+				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -541,21 +541,21 @@
 						'fk_self' => 'object',
 						'fk_other' => 'source',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),				
+				),
+				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
 				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>kinship (e.g. son / brother / uncle of…)</li><li>social / political position (e.g. governor (wālī) of…)</li><li>ALSO: murdered by…; varying dates of birth / death</li></ul>'),
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
-			),			
+			),
 			'additional_steps' => array(
 				'person_places' => array('label' => 'Places', 'foreign_key' => 'person'),
-				'person_relatives' => array('label' => 'Relatives', 'foreign_key' => 'person'),	
+				'person_relatives' => array('label' => 'Relatives', 'foreign_key' => 'person'),
 				'document_persons' => array('label' => 'Related To A Document', 'foreign_key' => 'person'),
 				'document_recipients' => array('label' => 'Recipient Of A Document', 'foreign_key' => 'person'),
 				'bibliographic_references' => array('label' => 'Bibliographic Reference', 'foreign_key' => 'object')
-			)			
+			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'person_places' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -564,14 +564,14 @@
 			'item_name' => 'Place of Person',
 			'primary_key' => array('auto' => false, 'columns' => array('person', 'place')),
 			'sort' => array('person' => 'asc', 'place' => 'asc'),
-			'fields' => array(				
+			'fields' => array(
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'related_label' => 'Details Of Place Associations Of This Person')
-				),				
+				),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'places',
@@ -584,7 +584,7 @@
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'person_relatives' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -593,14 +593,14 @@
 			'item_name' => 'Relative of Person',
 			'primary_key' => array('auto' => false, 'columns' => array('person', 'relative')),
 			'sort' => array('person' => 'asc', 'relative' => 'asc'),
-			'fields' => array(		
+			'fields' => array(
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'related_label' => 'Details Of Family Relationships Where This Is The Relating Person')
-				),				
+				),
 				'relative' => array('label' => 'Relative', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
@@ -608,12 +608,12 @@
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'related_label' => 'Details Of Family Relationships Where This Is The Related Person')
 				),
-				'type' => array('label' => 'Kinship', 'type' => T_ENUM, 'required' => true, 'default' => 'unknown', 'values' => array('mother' => 'Mother', 'father' => 'Father', 'child' => 'Child', 'sibling' => 'Sibling', 'other' => 'Other', 'unknown' => 'Unknown'), 'help' => 'Select the role of the <i>Person</i> in the kinship with the <i>Relative</i>'),				
+				'type' => array('label' => 'Kinship', 'type' => T_ENUM, 'required' => true, 'default' => 'unknown', 'values' => array('mother' => 'Mother', 'father' => 'Father', 'child' => 'Child', 'sibling' => 'Sibling', 'other' => 'Other', 'unknown' => 'Unknown'), 'help' => 'Select the role of the <i>Person</i> in the kinship with the <i>Relative</i>'),
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'document_persons' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -622,26 +622,26 @@
 			'item_name' => 'Person in Document',
 			'primary_key' => array('auto' => false, 'columns' => array('document', 'person')),
 			'sort' => array('document' => 'asc', 'person' => 'asc'),
-			'fields' => array(				
+			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signature',
 					'related_label' => 'Details Of Person Associations With This Document')
-				),				
+				),
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'persons',
 					'field'   => 'id',
 					'display' => $CUSTOM_VARIABLES['person_name_display'],
 					'related_label' => 'Details Of Associations of This Person With Documents')
-				),				
-				'type' => array('label' => 'Role', 'type' => T_ENUM, 'required' => true, 'default' => 'other', 'values' => array('attestor' => 'Attestor', 'scribe' => 'Scribe', 'sending_greetings' => 'Sending greetings', 'receiving_greetings' => 'Receiving greetings', 'secondary_recipient' => 'Secondary Recipient', 'other' => 'Other'), 'help' => 'In what role does the person occur in relation to the document?'),				
+				),
+				'type' => array('label' => 'Role', 'type' => T_ENUM, 'required' => true, 'default' => 'other', 'values' => array('attestor' => 'Attestor', 'scribe' => 'Scribe', 'sending_greetings' => 'Sending greetings', 'receiving_greetings' => 'Receiving greetings', 'secondary_recipient' => 'Secondary Recipient', 'other' => 'Other'), 'help' => 'In what role does the person occur in relation to the document?'),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'document_to_document_references' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -650,43 +650,52 @@
 			'item_name' => 'Document-to-Document Reference',
 			'primary_key' => array('auto' => false, 'columns' => array('source_doc', 'target_doc')),
 			'sort' => array('source_doc' => 'asc', 'target_doc' => 'asc'),
-			'fields' => array(				
+			'fields' => array(
 				'source_doc' => array('label' => 'Referencing Document', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signature',
 					'related_label' => 'Details Of References Where This Is A Referencing Document')
-				),				
+				),
 				'target_doc' => array('label' => 'Referenced Document (Target)', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'documents',
 					'field'   => 'id',
 					'display' => 'signature',
 					'related_label' => 'Details Of References Where This Is A Referenced Document')
-				),				
-				'comment' => array('label' => 'Comment', 'type' => T_TEXT_AREA),				
+				),
+				'comment' => array('label' => 'Comment', 'type' => T_TEXT_AREA),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'places' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Places',
 			'description' => 'A <b>place</b> represents any settlement or other place of relevance to documents, persons, and person groups.',
 			'item_name' => 'Place',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),		
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('name_translit' => 'asc'),
 			'fields' => array(
-				'name_translit' => array('label' => 'Transliterated Name', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),				
-				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
-				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'values' => array('settlement' => 'Settlement', 'other' => 'Other'), 'default' => 'settlement'),				
-				'name_arabic' => array('label' => 'Arabic Name', 'type' => T_TEXT_LINE, 'len' => 50),				
+				'name_translit' => array('label' => 'Transliterated Name', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
+				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
+				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'values' => array('settlement' => 'Settlement', 'other' => 'Other'), 'default' => 'settlement'),
+				'name_arabic' => array('label' => 'Arabic Name', 'type' => T_TEXT_LINE, 'len' => 50),
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
-				
-				'coordinates' => array('label' => 'Coordinates', 'type' => T_POSTGIS_GEOM, 'SRID' => '32640', 'help' => 'Enter the <a href="https://en.wikipedia.org/wiki/Well-known_text">well-known text (WKT)</a> representation of any POINT geometry, e.g. <code>POINT(501760.32 4649776.22)</code>. See also <a href="http://postgis.net/docs/ST_GeomFromText.html" target="_blank">here</a> for help. The spatial reference system is <a href="https://epsg.io/32640">EPSG:32640 (WGS 84 / UTM zone 40N)</a>.'),
-				
+
+				'coordinates' => array(
+					'label' => 'Coordinates',
+					'type' => T_POSTGIS_GEOM,
+					'SRID' => '32640',
+					'map_picker' => array(
+						'script' => 'alhamra_map_picker.js',
+						'map_options' => array('attributionControl' => false)
+					),
+					'help' => '<p>Select a location from the map by clicking the <code><span class="glyphicon glyphicon-map-marker"></span> Map</code> button, or manually enter the <a href="https://en.wikipedia.org/wiki/Well-known_text">well-known text (WKT)</a> representation of any POINT geometry, e.g. <code>POINT(501760.32 4649776.22)</code>. See also <a href="http://postgis.net/docs/ST_GeomFromText.html" target="_blank">here</a> for help. The spatial reference system is <a href="https://epsg.io/32640">EPSG:32640 (WGS 84 / UTM zone 40N)</a>.'
+				),
+
 				'country_region' => array('label' => 'Country/Region', 'type' => T_LOOKUP, 'required' => true, 'lookup' => array(
 					'cardinality' => CARDINALITY_SINGLE,
 					'table'   => 'countries_and_regions',
@@ -694,8 +703,8 @@
 					'display' => 'name',
 					'default' => 7,
 					'related_label' => 'Places In This Country/Region')
-				),				
-				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
+				),
+				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this place. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -708,8 +717,8 @@
 						'fk_self' => 'object',
 						'fk_other' => 'source',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],		
+				),
+				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			),
@@ -719,7 +728,7 @@
 				'bibliographic_references' => array('label' => 'Bibliographic Reference', 'foreign_key' => 'object')
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'person_groups' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
@@ -727,12 +736,12 @@
 			'description' => 'A <b>person group</b> represents a tribe, tribal unit and other groupings of <a href="?table=persons">persons</a>.',
 			'item_name' => 'Person Group',
 			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
-			'sort' => array('name_translit' => 'asc'),			
+			'sort' => array('name_translit' => 'asc'),
 			'fields' => array(
-				'name_translit' => array('label' => 'Name (transliterated)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),				
-				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),				
-				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'default' => 'other', 'values' => array('tribe' => 'Tribe', 'tribal_unit' => 'Tribal unit', 'other' => 'Other')),				
-				'name_arabic' => array('label' => 'Name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),				
+				'name_translit' => array('label' => 'Name (transliterated)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
+				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
+				'type' => array('label' => 'Type', 'type' => T_ENUM, 'required' => true, 'default' => 'other', 'values' => array('tribe' => 'Tribe', 'tribal_unit' => 'Tribal unit', 'other' => 'Other')),
+				'name_arabic' => array('label' => 'Name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),
 				'places' => array('label' => 'Place(s)', 'type' => T_LOOKUP,
 				'help' => 'Places associated with this person group',
 					'lookup' => array(
@@ -746,7 +755,7 @@
 						'fk_self' => 'person_group',
 						'fk_other' => 'place',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
+				),
 				'members' => array('label' => 'Group Members', 'type' => T_LOOKUP, 'help' => 'All persons belonging to this person group',
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -759,8 +768,8 @@
 						'fk_self' => 'person_group',
 						'fk_other' => 'person',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),				
-				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP, 
+				),
+				'bibliographic_references' => array('label' => 'Bibliographic References', 'type' => T_LOOKUP,
 					'help' => 'Use this field to assign <a href="?table=sources">sources</a> as references for this person group. These assignments are stored in a separate table <a href="?table=bibliographic_references">Bibliographic References</a>. ' . $CUSTOM_VARIABLES['help_details_edit'],
 					'lookup' => array(
 						'cardinality' => CARDINALITY_MULTIPLE,
@@ -773,9 +782,9 @@
 						'fk_self' => 'object',
 						'fk_other' => 'source',
 						'defaults' => array('edit_user' => REPLACE_DYNAMIC_SESSION_USER))
-				),		
+				),
 				'information' => array('label' => 'Information', 'type' => T_TEXT_AREA, 'help' => 'Use this field to specify any additional factual information that is not reflected in any other field'),
-				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],		
+				'edit_note' => $CUSTOM_VARIABLES['history']['edit_note'],
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			),
@@ -783,65 +792,65 @@
 				'bibliographic_references' => array('label' => 'Bibliographic Reference', 'foreign_key' => 'object')
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'countries_and_regions' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Countries/Regions',
 			'description' => 'A <b>country or region</b> is a regional container for the places of relevance in the archive.',
 			'item_name' => 'Country/Region',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'), 
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('name' => 'asc'),
 			'fields' => array(
-				'name' => array('label' => 'Name', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),				
+				'name' => array('label' => 'Name', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			),
 			'additional_steps' => array(
-				'places' => array('label' => 'Place In This Region', 'foreign_key' => 'country_region'),				
+				'places' => array('label' => 'Place In This Region', 'foreign_key' => 'country_region'),
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'keywords' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Keywords',
 			'description' => 'A <b>keyword</b> is a word used to tag documents of the archive.',
 			'item_name' => 'Keyword',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'), 
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('keyword' => 'asc'),
-			'fields' => array(		
-				'keyword' => array('label' => 'Keyword', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),				
+			'fields' => array(
+				'keyword' => array('label' => 'Keyword', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'sources' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Sources',
 			'description' => 'A <b>source</b> represents as a bibliographic reference for documents, places, persons and person groups in the archive.',
 			'item_name' => 'Source',
-			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'), 
+			'primary_key' => array('auto' => true, 'columns' => array('id'), 'sequence_name' => 'unique_object_id_seq'),
 			'sort' => array('id' => 'asc'),
-			'fields' => array(		
+			'fields' => array(
 				'short_title' => array('label' => 'Short Title', 'type' => T_TEXT_LINE, 'len' => 100, 'required' => true, 'help' => '<ul><li>Secondary literature: Author date (e.g. Hoffmann-Ruf 2008)</li><li>Primary source: Author, Short title (e.g. al-ʿAbri, Tabaṣṣurāt)</li></ul>'),
 				'full_title' => array('label' => 'Full Title', 'type' => T_TEXT_AREA, 'len' => 1000, 'required' => true, 'help' => '<ul><li>Secondary literature: Hoffmann-Ruf, Michaela, Scheich Muḥsin b. Zahrān al-ʿAbrī: Tribale Macht im Oman des 19. Jahrhunderts, Berlin 2008.</li><li>Primary source: ʿAbrī, Ibrāhīm b. Saʿīd al-, Tabaṣṣurāt al-muʿtabirīn fī tārīḫ al-ʿAbrīyīn (manuscript) 1959.</li></ul>'),
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'bibliographic_references' => array(
 			'actions' => $CUSTOM_VARIABLES['all_actions'],
 			'display_name' => 'Bibliographic References',
 			'description' => 'A <b>bibliographic reference</b> connects places, persons, person groups and documents to bibliographic <a href="?table=sources">sources</a>.',
 			'item_name' => 'Bibliographic Reference',
-			'primary_key' => array('auto' => false, 'columns' => array('object', 'source')), 
+			'primary_key' => array('auto' => false, 'columns' => array('object', 'source')),
 			'sort' => array('object' => 'asc', 'source' => 'asc'),
-			'fields' => array(		
+			'fields' => array(
 				'object' => array('label' => 'Object', 'type' => T_LOOKUP, 'required' => true, 'allow-create' => false, 'help' => 'Select the place, person, person group or document to link to a source',
 					'lookup' => array(
 						'cardinality' => CARDINALITY_SINGLE,
@@ -865,14 +874,14 @@
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		'stored_queries' => array(
 			'actions' => array(MODE_LINK, MODE_VIEW, MODE_EDIT, MODE_LIST, MODE_DELETE), // these are updated based on user role in alhamra.php plugin
 			'display_name' => 'Stored Queries',
 			'description' => 'A <b>stored query</b> allows you to view a live visualization of a database query result based on current data.',
 			'sort' => array('title' => 'asc'),
-			'item_name' => 'Stored Query',		
+			'item_name' => 'Stored Query',
 			'show_in_related' => false,
 			'primary_key' => array('auto' => false, 'columns' => array('id')),
 			'render_links' => array(
@@ -886,7 +895,7 @@
 				'create_time' => array('label' => 'Timestamp', 'type' => T_TEXT_LINE, 'editable' => false)
 			)
 		),
-		
+
 		// ----------------------------------------------------------------------------------------------------
 		// n:m tables that will only be visible in history mode
 		// ----------------------------------------------------------------------------------------------------
@@ -894,20 +903,20 @@
 			'actions' => array(),
 			'display_name' => 'Document Scans',
 			'description' => 'Document Scans',
-			'item_name' => 'Document Scans',	
+			'item_name' => 'Document Scans',
 			'show_in_related' => false,
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'scan' => array('label' => 'Scan Image', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['scan']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
-		),		
+		),
 		'document_keywords' => array(
 			'actions' => array(),
 			'display_name' => 'Document Keywords',
 			'description' => '',
-			'item_name' => 'Document Keywords',	
-			'show_in_related' => false,			
+			'item_name' => 'Document Keywords',
+			'show_in_related' => false,
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'keyword' => array('label' => 'Keyword', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['keyword']),
@@ -918,14 +927,14 @@
 			'actions' => array(),
 			'display_name' => 'Places in Documents',
 			'description' => '',
-			'item_name' => 'Places in Documents',		
+			'item_name' => 'Places in Documents',
 			'show_in_related' => false,
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
-		),		
+		),
 		'document_primary_agents' => array(
 			'actions' => array(),
 			'display_name' => 'Primary Agents of Documents',
@@ -937,36 +946,36 @@
 				'person' => array('label' => 'Primary Agent', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
-		),	
+		),
 		'document_primary_agent_groups' => array(
 			'actions' => array(),
 			'display_name' => 'Primary Agent Groups of Documents',
 			'description' => '',
-			'item_name' => 'Primary Agent Groups of Documents',	
-			'show_in_related' => false,			
+			'item_name' => 'Primary Agent Groups of Documents',
+			'show_in_related' => false,
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'person_group' => array('label' => 'Primary Agent Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
-		),	
+		),
 		'person_of_group' => array(
 			'actions' => array(),
 			'display_name' => 'Person Group Memberships',
 			'description' => '',
-			'item_name' => 'Person Group Memberships',	
+			'item_name' => 'Person Group Memberships',
 			'show_in_related' => false,
 			'fields' => array(
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
-		),		
+		),
 		'person_group_places' => array(
 			'actions' => array(),
 			'display_name' => 'Places of Person Groups',
 			'description' => '',
-			'item_name' => 'Places of Person Groups',		
+			'item_name' => 'Places of Person Groups',
 			'show_in_related' => false,
 			'fields' => array(
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
