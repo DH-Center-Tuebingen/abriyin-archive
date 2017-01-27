@@ -691,7 +691,8 @@
 					'SRID' => '32640',
 					'map_picker' => array(
 						'script' => 'alhamra_map_picker.js',
-						'map_options' => array('attributionControl' => false)
+						'map_options' => array('attributionControl' => false),
+						'draw_options' => array('circle' => false)
 					),
 					'help' => '<p>Select a location from the map by clicking the <code><span class="glyphicon glyphicon-map-marker"></span> Map</code> button, or manually enter the <a href="https://en.wikipedia.org/wiki/Well-known_text">well-known text (WKT)</a> representation of any POINT geometry, e.g. <code>POINT(501760.32 4649776.22)</code>. See also <a href="http://postgis.net/docs/ST_GeomFromText.html" target="_blank">here</a> for help. The spatial reference system is <a href="https://epsg.io/32640">EPSG:32640 (WGS 84 / UTM zone 40N)</a>.'
 				),
