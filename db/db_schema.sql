@@ -425,6 +425,13 @@ language 'plpgsql';
 
 create or replace view recent_changes_list as select * from get_recent_changes() order by timestamp desc;
 
+create or replace view view_changes_by_user as
+select user_id, (select role from users where id=user_id) user_role, count(*) num_changes, min(timestamp) first_change, max(timestamp) last_change
+from recent_changes_list
+where user_id is not null
+group by user_id, user_role
+order by count(*) desc;
+
 drop table if exists document_primary_agent_groups cascade;
 create table document_primary_agent_groups (
 	document int references documents(id) on update cascade,
@@ -432,13 +439,6 @@ create table document_primary_agent_groups (
 	primary key (document, person_group)
 );
 select make_history_table('document_primary_agent_groups');
-
-create or replace view view_changes_by_user as
-select user_id, (select role from users where id=user_id) user_role, count(*) num_changes, min(timestamp) first_change, max(timestamp) last_change
-from recent_changes_list
-where user_id is not null
-group by user_id, user_role
-order by count(*) desc;
 
 alter table persons add constraint person_name_unique unique (lastname_translit, forename_translit, byname_translit);
 alter table documents add column translation text;

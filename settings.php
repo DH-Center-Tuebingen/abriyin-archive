@@ -75,6 +75,7 @@
 	$CUSTOM_VARIABLES['extra_tables'] = array(
 		'view_changes_by_user' => array(
 			'actions' => array(MODE_LIST),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Changes By User',
 			'description' => '',
 			'item_name' => 'Change By User',
@@ -96,6 +97,7 @@
 		),
 		'recent_changes_list' => array(
 			'actions' => array(MODE_LIST),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'All Recent Changes',
 			'description' => 'Recent changes made by users in the database. Actions are either INSERT (new record), UPDATE (edited record) and DELETE (removed record). To see details of each change, please go to the editing history of the table mentioned in the "History Table" column.',
 			'item_name' => 'Change',
@@ -147,7 +149,12 @@
 		'additional_callable_plugin_functions' => array(),
 		'querypage_stored_queries_table' => 'stored_queries',
 		'querypage_permission_func' => 'alhamra_querypage_check_permission',
-		'cache_dir' => 'cache'
+		'cache_dir' => 'cache',
+		'global_search' => array(
+			'include_table' => true,
+			'max_detail_results' => 50,
+			'transliterator_rules' => ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;'
+		)
 	);
 
 	/* ========================================================================================================	*/
@@ -902,6 +909,7 @@
 		// ----------------------------------------------------------------------------------------------------
 		'document_scans' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Document Scans',
 			'description' => 'Document Scans',
 			'item_name' => 'Document Scans',
@@ -914,6 +922,7 @@
 		),
 		'document_keywords' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Document Keywords',
 			'description' => '',
 			'item_name' => 'Document Keywords',
@@ -926,6 +935,7 @@
 		),
 		'document_places' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Places in Documents',
 			'description' => '',
 			'item_name' => 'Places in Documents',
@@ -938,6 +948,7 @@
 		),
 		'document_primary_agents' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Primary Agents of Documents',
 			'description' => '',
 			'item_name' => 'Primary Agents of Documents',
@@ -950,6 +961,7 @@
 		),
 		'document_primary_agent_groups' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Primary Agent Groups of Documents',
 			'description' => '',
 			'item_name' => 'Primary Agent Groups of Documents',
@@ -962,6 +974,7 @@
 		),
 		'person_of_group' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Person Group Memberships',
 			'description' => '',
 			'item_name' => 'Person Group Memberships',
@@ -974,6 +987,7 @@
 		),
 		'person_group_places' => array(
 			'actions' => array(),
+			'global_search' => array('include_table' => false),
 			'display_name' => 'Places of Person Groups',
 			'description' => '',
 			'item_name' => 'Places of Person Groups',
