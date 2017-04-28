@@ -282,7 +282,7 @@
 			return;
 		}
 
-		if($menu[1]['name'] != 'Browse & Edit') { // just to be sure
+		if($menu[1]['name'] != l10n('menu.browse+edit')) { // just to be sure
 			echo 'Need to update alhamra_menu_complete()';
 			return;
 		}
