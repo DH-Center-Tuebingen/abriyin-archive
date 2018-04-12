@@ -63,21 +63,13 @@ TABLE;
             'du lhigga' => 12,
 
             // exceptions
-            'rabi' => 3, #???
-            'r. i' => 3,
-            'r. ii' => 4,
+            'rabi' => 3, 'r. i' => 3, 'r. ii' => 4,
             'rabii ii' => 4,
-            'gumada' => 5, #???
-            'g i' => 5,
+            'gumada' => 5, 'g i' => 5,
             'g ii' => 6,
-            'sauwal' => 10,
-            'sawal' => 10,
-            'alqada' => 11,
-            'al qada' => 11,
-            'alhagg' => 12,
-            'alhag' => 12,
-            'al hagg' => 12,
-            'al hag' => 12,
+            'sauwal' => 10, 'sawal' => 10,
+            'alqada' => 11, 'al qada' => 11,
+            'alhagg' => 12, 'alhag' => 12, 'al hagg' => 12, 'al hag' => 12,
         );
 
         foreach($db->query($query, PDO::FETCH_ASSOC) as $row) {
@@ -95,16 +87,17 @@ TABLE;
 
             // remove everything non alpha numeric from datum
             $d = trim(preg_replace('/[^a-z0-9\. ]/', '', $d));
-            // remove everything non numeric from datum
+            // remove everything non numeric or dot or blank from jahr
             $jahr = trim(preg_replace('/[^0-9\. ]/', '', $jahr));
 
+            // now we can extract the jahr
             if(!preg_match('/^\d\d\d\d\d*$/', $jahr))
                 $jahr = '';
             else
                 $jahr = substr($jahr, 0, 4);
 
             $tag = $monat = '';
-            // recognize arab months
+            // recognize arab months, and remove recognized month
             foreach($arab_months as $name => $m) {
                 $repl = str_replace($name, '', $d);
                 if($d !== str_replace($name, '', $d)) {
@@ -116,6 +109,7 @@ TABLE;
 
             // remove any non-numeric or blank character remaining
             $d = trim(preg_replace('/^0+|[^0-9 ]/', '', $d));
+            
             // extract day and year
             if(preg_match('/^\d\d?$/', $d))
                 $tag = $d;
