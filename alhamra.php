@@ -231,6 +231,11 @@
 		// create stored queries
 		if($_SESSION['user_data']['role'] == 'admin' && $_SESSION['user_id'] == 1) {
 			$extras_menu['items'][] = array(
+				'label' => 'Import Module',
+				'href' => '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'))
+			);
+			$extras_menu['items'][] = '<li class="divider"></li>';
+			$extras_menu['items'][] = array(
 				'label' => 'Query the Database',
 				'href' => '?' . http_build_query(array('mode' => MODE_QUERY))
 			);
