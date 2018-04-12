@@ -6,6 +6,7 @@
         echo <<<HTML
             <form class='form-inline'>
                 <button data-proc="test_dates" type="button" class="form-control btn btn-default">Identify Dates</button>
+                <button data-proc="test_persons" type="button" class="form-control btn btn-default">Identify Persons</button>
             </form>
             <hr />
             <script>
@@ -19,7 +20,7 @@
                 .code {
                     font: 15px Courier, sans-serif;
                 }
-                .table {
+                table.fit {
                     white-space: nowrap;
                     width: 1%;
                 }
@@ -35,6 +36,48 @@ HTML;
     }
 
     // ========================================================================================================
+    function import_test_persons() {
+    // ========================================================================================================
+        $db = db_connect();
+        $query = "select distinct (adressat) person from neu union
+            select distinct absender from neu union
+            select distinct weitere from neu";
+        echo <<<TABLE
+            <table class='table table-striped table-bordered table-responsive table-condensed'>
+                <tr>
+                    <th>#</th>
+                    <th>Originaltext</th>
+                    <th>Split</th>
+                    <!--<th>Personen in DB</th>
+                    <th>Neue Personen</th>
+                    <th>Jahr orig.</th>
+                    <th>Processed</th>
+                    <th>DMG Plain</th>-->
+                </tr>
+TABLE;
+        $c = 1;
+        foreach($db->query($query, PDO::FETCH_ASSOC) as $row) {
+            $orig = trim($row['person']);
+            if($orig == '')
+                continue;
+
+            $pdb = $pn = $split = '';
+
+            echo <<<HTML
+                <tr>
+                    <td class="code">$c</td>
+                    <td class="code">$orig</td>
+                    <td class="code">$split</td>
+                    <!--<td class="code">$pdb</td>
+                    <td class="code">$pn</td>-->
+                </tr>
+HTML;
+            $c++;
+        }
+        echo "</table>\n";
+    }
+
+    // ========================================================================================================
     // QUESTIONS:
     // - Wenn nur "Rabi" steht, ist das dann immer Rabi I ? Gleiches für "Gumada"
     function import_test_dates() {
@@ -42,7 +85,7 @@ HTML;
         $db = db_connect();
         $query = "select nr, jahr, datum orig, replace(dmg_plain(datum), E'\011', ' ') plain from neu";
         echo <<<TABLE
-            <table class='table table-striped table-bordered table-responsive table-condensed'>
+            <table class='table fit rtable-striped table-bordered table-responsive table-condensed'>
                 <tr>
                     <th>Jahr</th>
                     <th>Datumstext</th>
