@@ -23,6 +23,11 @@
                     white-space: nowrap;
                     width: 1%;
                 }
+                .fat {
+                    font-weight: bold;
+                    color: darkgreen;
+                    text-align: center
+                }
             </style>
 HTML;
         if(isset($_GET['proc']) && function_exists('import_' . $_GET['proc']))
@@ -39,6 +44,7 @@ HTML;
         echo <<<TABLE
             <table class='table table-striped table-bordered table-responsive table-condensed'>
                 <tr>
+                    <th>Jahr</th>
                     <th>Datumstext</th>
                     <th>Tag</th>
                     <th>Monat</th>
@@ -109,7 +115,7 @@ TABLE;
 
             // remove any non-numeric or blank character remaining
             $d = trim(preg_replace('/^0+|[^0-9 ]/', '', $d));
-            
+
             // extract day and year
             if(preg_match('/^\d\d?$/', $d))
                 $tag = $d;
@@ -120,16 +126,20 @@ TABLE;
                 $tag = substr($d, 0, strpos($d, ' '));
             }
 
-            if($col_orig == '')
-                $col_orig = '<i>(empty)</i>';
+            if($col_orig == '') {
+                $col_orig = '&nbsp;';
+                if($col_jahr == '')
+                    continue;
+            }
 
             // -----------------------------------------------------------------
             echo <<<HTML
                 <tr>
+                    <td class="code">$col_jahr</td>
                     <td class="code">$col_orig</td>
-                    <td class="code">$tag</td>
-                    <td class="code">$monat</td>
-                    <td class="code">$jahr</td>
+                    <td class="code fat">$tag</td>
+                    <td class="code fat">$monat</td>
+                    <td class="code fat">$jahr</td>
                     <!--<td class="annot">$col_jahr</td>
                     <td class="annot">$d</td>
                     <td class="annot">$col_plain</td>-->
