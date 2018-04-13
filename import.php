@@ -5,8 +5,8 @@
         $action = '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'));
         echo <<<HTML
             <form class='form-inline'>
-                <button data-proc="test_dates" type="button" class="form-control btn btn-default">Identify Dates</button>
-                <button data-proc="test_persons" type="button" class="form-control btn btn-default">Identify Persons</button>
+                <button data-proc="test_dates" type="button" class="form-control btn btn-default">Datumsangaben analysieren</button>
+                <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
             </form>
             <hr />
             <script>
@@ -17,8 +17,8 @@
                 });
             </script>
             <style>
-                .code {
-                    font: 15px Courier, sans-serif;
+                table {
+                    /*font: 15px Courier, sans-serif;*/
                 }
                 table.fit {
                     white-space: nowrap;
@@ -33,6 +33,10 @@
                 /* name markup */
                 .name-full {
                     background-color: lightyellow;
+                    font-weight: bold;
+                }
+                .found-id {
+                    background-color: lightgreen;
                     font-weight: bold;
                 }
             </style>
@@ -79,19 +83,37 @@ HTML;
 	}
 
     // ========================================================================================================
+    function get_all_persons_from_db($db) {
+    // ========================================================================================================
+        $persons = array();
+        $sql = 'select id, dmg_plain(lastname_translit) ln, dmg_plain(forename_translit) fn, dmg_plain(byname_translit) bn from persons';
+        foreach($db->query($sql, PDO::FETCH_ASSOC) as $row) {
+            $ln = $row['ln'];
+            if(ends_with($ln, 'al-'))
+                $ln = 'al-' . mb_substr($ln, 0, -3);
+            $full_name = preg_replace('/[^a-z]/', '', $row['fn'] . $row['bn'] . $ln);
+            $persons[$full_name] = $row['id'];
+        }
+        return $persons;
+    }
+
+    // ========================================================================================================
     function import_test_persons() {
     // ========================================================================================================
         $db = db_connect();
+        $persons_db = get_all_persons_from_db($db);
+        $echo = '';
+
         $query = "select distinct (adressat) person from neu union
             select distinct absender from neu union
-            select distinct weitere from neu limit 1000";
-        echo <<<TABLE
-            <p>Legende: <span class="name-full">Kompletter Name</span></p>
+            select distinct weitere from neu";
+        //$query .= " limit 1000";
+        $table = <<<TABLE
             <table class='table table-striped table-bordered table-responsive table-condensed'>
                 <tr>
-                    <th>#</th>
-                    <th>Originaltext</th>
-                    <th>Split</th>
+                    <th class='col-md-1'>#</th>
+                    <th class='col-md-5'>Originaltext</th>
+                    <th class='col-md-6'>Aufgetrennt</th>
                     <!--<th>Personen in DB</th>
                     <th>Neue Personen</th>
                     <th>Jahr orig.</th>
@@ -100,6 +122,11 @@ HTML;
                 </tr>
 TABLE;
         $c = 1;
+        $arr_fullnames = array();
+        $arr_names = array();
+        $c_found = 0;
+        $new_names = array();
+
         foreach($db->query($query, PDO::FETCH_ASSOC) as $row) {
             $orig = unify_diacritics(trim($row['person']));
             if($orig == '')
@@ -119,28 +146,96 @@ TABLE;
             // for each person
             foreach($pax as $p) {
                 $p = trim($p);
+                if($p != '' && !isset($arr_names[$p]))
+                    $arr_names[$p] = 1;
 
                 // check if last name present (ends with al-X, ar-X, ad-X, etc.)
-                if(preg_match('/(*UTF8)(?<nachname>(a|ā).\-\s?.+)$/i', $p, $match))
+                if(preg_match('/(*UTF8)(?<nachname>(?<pre>(a|ā).)\-\s?(?<family>[^\s]+))$/i', $p, $match)) {
+                    // make dmg plain
+                    $forename = mb_substr($p, 0, mb_strlen($p) - mb_strlen($match['nachname']));
+                    $db_search_name = $forename .' al-'.$match['family'];
+                    db_get_single_val('select dmg_plain(?)', array($db_search_name), $name_plain, $db);
+                    $name_plain = preg_replace('/[^a-z]/', '', $name_plain);
+
+                    if($name_plain == 'muhsinbzahranbmuhammadalabri')
+                        $name_plain = 'muhsinbzahranbmuhammadbibrahimalabri';
+
+                    if(!isset($arr_fullnames[$name_plain])) {
+                        $arr_fullnames[$name_plain] = false;
+                        foreach($persons_db as $db_name => $db_id) {
+                            if($name_plain == $db_name) {
+                                $c_found++;
+                                $arr_fullnames[$name_plain] = $db_id;
+                                break;
+                            }
+                        }
+                        if(!$arr_fullnames[$name_plain]) {
+                            $arr_new_names[] = array(
+                                $p,
+                                $forename,
+                                $match['family'] . ', al-'
+                            );
+                        }
+                    }
+
                     $p = "<span class='name-full'>$p</span>";
-
-                // TODO split into firstname / lastname
-
+                    if($arr_fullnames[$name_plain])
+                        $p .= " <span class='found-id'>({$arr_fullnames[$name_plain]})</span>";
+                }
                 $split .= ($p == '' ? '' : "<li>$p</li>");
             }
 
-            echo <<<HTML
+            $table .= <<<HTML
                 <tr>
-                    <td class="code">$c</td>
-                    <td class="code">$orig</td>
-                    <td class="code"><ul>$split</ul></td>
-                    <!--<td class="code">$pdb</td>
-                    <td class="code">$pn</td>-->
+                    <td>$c</td>
+                    <td>$orig</td>
+                    <td><ul>$split</ul></td>
                 </tr>
 HTML;
             $c++;
         }
-        echo "</table>\n";
+        $table .= "</table>\n";
+
+        $c_names = count(array_keys($arr_names));
+        $c_full = count(array_keys($arr_fullnames));
+
+        $pct = $c_full > 0 ? ' (' . (int) (1000 * $c_found / $c_full) / 10. . '%)' : '';
+        $c_new_names = count($arr_new_names);
+
+        echo <<<HTML
+            <p>Springe weiter zu <a href="#neue">Neu zu erstellende Personendatensätze</a></p>
+            <a name="identifikation"></a>
+            <h2>Identifikation von Namen und Personen</h2>
+            <p>
+                Es sind $c_names verschiedene Namensangaben in der Originaltabelle.
+                Davon konnten $c_full vollständige Namen identifiziert werden.
+                Von diesen vollständigen Namen wurden $c_found in der DB gefunden$pct.
+            </p>
+            <p>Legende: <span class="name-full">Kompletter Name</span> <span class="found-id">Gefundene DB-ID</span></p>
+HTML;
+        echo $table;
+
+        echo <<<HTML
+            <a name="neue"></a>
+            <h2>Neu zu erstellende Personendatensätze</h2>
+            <p>Springe nach oben zu <a href="#identifikation">Identifikation von Namen und Personen</a></p>
+            <p>Folgende $c_new_names als vollständig erkannte Namensangeben wurden in der DB nicht gefunden. Diese würden als neue Personen mit Vorname + Familienname wie folgt in der DB angelegt werden:</p>
+            <table class="table table-striped table-bordered table-responsive table-condensed">
+                <tr>
+                    <th>#</th>
+                    <th>Namensangabe aus der Tabelle</th>
+                    <th>Vorname</th>
+                    <th>Familienname</th>
+                </tr>
+HTML;
+        $c = 1;
+        foreach($arr_new_names as $new_name) {
+            echo sprintf(
+                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                $c++, $new_name[0], $new_name[1], $new_name[2]
+            );
+        }
+        echo '</table>';
     }
 
     // ========================================================================================================
