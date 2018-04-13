@@ -32,11 +32,11 @@
 
                 /* name markup */
                 .name-full {
-                    background-color: lightyellow;
+                    background-color: #ffccff;
                     font-weight: bold;
                 }
                 .found-id {
-                    background-color: lightgreen;
+                    background-color: #66ff66;
                     font-weight: bold;
                 }
             </style>
@@ -211,7 +211,7 @@ HTML;
                 Davon konnten $c_full vollständige Namen identifiziert werden.
                 Von diesen vollständigen Namen wurden $c_found in der DB gefunden$pct.
             </p>
-            <p>Legende: <span class="name-full">Kompletter Name</span> <span class="found-id">Gefundene DB-ID</span></p>
+            <p>Legende: <span class="name-full">Vollständiger Personenname</span> <span class="found-id">ID der gefundenen Person in der DB</span></p>
 HTML;
         echo $table;
 
@@ -244,8 +244,12 @@ HTML;
     function import_test_dates() {
     // ========================================================================================================
         $db = db_connect();
-        $query = "select nr, jahr, datum orig, replace(dmg_plain(datum), E'\011', ' ') plain from neu";
+        //$query = "select nr, jahr, datum orig, replace(dmg_plain(datum), E'\011', ' ') plain from neu";
+        $query = "select jahr, datum orig, replace(dmg_plain(datum), E'\011', ' ') plain from neu group by 1,2";
         echo <<<TABLE
+            <h2>Analyse der Datumsangaben</h2>
+            <p>Die ersten beiden Spalten zeigen alle unterschiedlichen und nichtleeren Jahr- und Datumsspalten der Altdaten-Tabelle. Die drei letzten Spalten Tag, Monat und Jahr entsprechen den aus den ersten beiden Spalten extrahierten Datumsbestandteilen.</p>
+            <p>Folgende Annahme wurde getroffen: Wenn nur "Rabīʿ" (ohne I oder II) als Monat gefunden wurde, dann wurde "Rabīʿ I" angenommen. Gleiches gilt für Ǧumādā.</p>
             <table class='table fit rtable-striped table-bordered table-responsive table-condensed'>
                 <tr>
                     <th>Jahr</th>
