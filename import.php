@@ -35,6 +35,7 @@
             <form class='form-inline'>
                 <button data-proc="test_dates" type="button" class="form-control btn btn-default">Datumsangaben analysieren</button>
                 <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
+                <button data-proc="test_documents" type="button" class="form-control btn btn-default">Dokumente analysieren</button>
             </form>
             <hr />
             <script>
@@ -76,12 +77,6 @@ HTML;
 				'Č',       'č',       'Ẕ',       'ẕ',       'Ž',       'ž',       'Ż',       'ż',       'Ç',       'ç',       'Ş',       'ş',       'Ğ',       'ğ',
 				'Ḳ',       'ḳ',       'ñ',       'ŋ',       'Ė',       'ė'
 			),
-			/*array(
-				'A\u0304', 'a\u0304', 'T\u0331', 't\u0331', 'G\u030c', 'g\u030c', 'H\u0323', 'h\u0323', 'D\u0331', 'd\u0331', 'S\u030c', 's\u030c', 'S\u0323', 's\u0323',
-				'D\u0323', 'd\u0323', 'T\u0323', 't\u0323', 'Z\u0323', 'z\u0323', 'G\u0307', 'g\u0307', 'U\u0304', 'u\u0304', 'I\u0304', 'i\u0304', 'S\u0331', 's\u0331',
-				'C\u030c', 'c\u030c', 'Z\u0331', 'z\u0331', 'Z\u030c', 'z\u030c', 'Z\u0307', 'z\u0307', 'C\u0327', 'c\u0327', 'S\u0327', 's\u0327', 'G\u0306', 'g\u0306',
-				'K\u0323', 'k\u0323', 'n\u0303', 'n\u0321', 'E\u0307', 'e\u0307'
-			),*/
 			$text
 		);
 	}
@@ -122,6 +117,95 @@ SQL;
         foreach($db->query($sql, PDO::FETCH_ASSOC) as $row)
             $groups[$row['family_name']] = $row;
         return $groups;
+    }
+
+    // ========================================================================================================
+    /*
+        TODO FRAGEN:
+        - Vorder/Rückseite richtig interpretiert vD1-20 heißt: Vorderseite von D1-20??
+    */
+    function import_test_documents() {
+    // ========================================================================================================
+        echo <<<HTML
+            <h2>Dokumente</h2>
+            <table class='table table-striped table-bordered table-responsive table-condensed'>
+                <tr>
+                    <th class=''>#</th>
+                    <th class=''>Nr</th>
+                    <th class=''>Sig.</th>
+                    <th class=''>Bündel</th>
+                    <th class=''>Aufnahme</th>
+                    <th class=''>dif</th>
+                    <th class=''>Typ</th>
+                    <th class=''>Rückseite?</th>
+                    <th class=''>DB-Signatur</th>
+                    <th class=''>DB-ID</th>
+                    <th class=''>Relevant?</th>
+                </tr>
+HTML;
+        $db = db_connect();
+        foreach($db->query('select id, signature from documents', PDO::FETCH_ASSOC) as $row)
+            $db_docs[$row['signature']] = $row['id'];
+        $c_doc = $c_lines = $c_relevant = $c_exist = 0;
+        $table = '';
+        foreach($db->query('select * from neu', PDO::FETCH_ASSOC) as $doc) {
+            $c_lines++;
+            $nr = trim($doc['nr']);
+            $dif = trim($doc['dif']);
+            $db_sig = '';
+            $match = array();
+            // match "B02-3: 25" or similar
+            if(preg_match('/^(?<sig>[BD]\d+)-(?<bundle>[^:]+):\s*(?<aufnahme>.+)$/', $nr, $match)) {
+                $bundle = $match['bundle'];
+                $sig = ltrim($match['sig'], '0');
+                $aufnahme = ltrim($match['aufnahme'], '0');
+                $db_sig = sprintf('%s-%s', $sig, $aufnahme);
+            }
+            else if(preg_match('/^(?<sig>[0123A]\d+)-(?<aufnahme>.+)$/', $nr, $match)) {
+                $bundle = '';
+                $sig = ltrim($match['sig'], '0');
+                $aufnahme = ltrim($match['aufnahme'], '0');
+                $db_sig = sprintf('%s-%s', $sig, $aufnahme);
+            }
+
+            if($db_sig == '') {
+                echo "<script>console.log('$nr')</script>";
+                continue;
+            }
+
+            $typ = '&mdash;';
+            if(preg_match('/^(?<typ>A|B|MS)/', $dif, $match))
+                $typ = $match['typ'];
+            $backside = preg_match('/\br[0123ABD]\d+-\d/', $dif);
+            $db_doc_id = '';
+            if(isset($db_docs[$db_sig])) {
+                $db_doc_id = $db_docs[$db_sig];
+                $c_exist++;
+            }
+            $relevant = !$backside && $db_doc_id == '' && in_array($typ, array('A', 'B'));
+            if($relevant)
+                $c_relevant++;
+            $table .= sprintf(
+                "<tr>". str_repeat('<td>%s</td>', 11) ."</tr>\n",
+                ++$c_doc,
+                $nr,
+                $sig,
+                $bundle,
+                $aufnahme,
+                $dif,
+                $typ,
+                $backside ? 'X' : '',
+                $db_sig,
+                $db_doc_id,
+                $relevant ? 'X' : ''
+            );
+        }
+        $info = sprintf("<p>
+            <b>%s</b> Zeilen verarbeitet.
+            <b>%s</b> identifizierte Dokumente existieren bereits in der DB.
+            Nur jene <b>%s</b> Zeilen, in denen die Spalte \"Relevant?\" mit X markiert ist, sind für die Überführung in die DB relevant.
+        </p>", $c_lines, $c_relevant, $c_exist);
+        echo $info, $table, '</table>', PHP_EOL;
     }
 
     // ========================================================================================================
