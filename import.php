@@ -4,18 +4,6 @@
     // ========================================================================================================
         $action = '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'));
         echo <<<HTML
-            <form class='form-inline'>
-                <button data-proc="test_dates" type="button" class="form-control btn btn-default">Datumsangaben analysieren</button>
-                <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
-            </form>
-            <hr />
-            <script>
-                $(document).ready(function() {
-                    $('button').click(function() {
-                        location.href = "$action&proc=" + $(this).data('proc');
-                    });
-                });
-            </script>
             <style>
                 table {
                     /*font: 15px Courier, sans-serif;*/
@@ -39,7 +27,23 @@
                     background-color: #66ff66;
                     font-weight: bold;
                 }
+                .person-group {
+                    background-color: #99ccff;
+                    font-weight: bold;
+                }
             </style>
+            <form class='form-inline'>
+                <button data-proc="test_dates" type="button" class="form-control btn btn-default">Datumsangaben analysieren</button>
+                <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
+            </form>
+            <hr />
+            <script>
+                $(document).ready(function() {
+                    $('button').click(function() {
+                        location.href = "$action&proc=" + $(this).data('proc');
+                    });
+                });
+            </script>
 HTML;
         if(isset($_GET['proc']) && function_exists('import_' . $_GET['proc']))
             call_user_func('import_' . $_GET['proc']);
@@ -98,6 +102,29 @@ HTML;
     }
 
     // ========================================================================================================
+    function get_db_person_groups($db) {
+    // ========================================================================================================
+        $sql = <<<SQL
+        select id, group_name, left(family_name, strpos(family_name, ',') - 1) family_name
+        from (
+        select g.id, g.name_translit group_name, (
+            select lastname_translit from person_of_group pg, persons p
+            where g.id = pg.person_group
+            and pg.person = p.id
+            limit 1
+        ) family_name
+        from person_groups g
+        ) x
+        where family_name is not null
+        and family_name <> 'Unknown'
+SQL;
+        $groups = array();
+        foreach($db->query($sql, PDO::FETCH_ASSOC) as $row)
+            $groups[$row['family_name']] = $row;
+        return $groups;
+    }
+
+    // ========================================================================================================
     function import_test_persons() {
     // ========================================================================================================
         $db = db_connect();
@@ -126,6 +153,8 @@ TABLE;
         $arr_names = array();
         $c_found = 0;
         $new_names = array();
+        $mentioned_groups = array();
+        $person_groups = get_db_person_groups($db);
 
         foreach($db->query($query, PDO::FETCH_ASSOC) as $row) {
             $orig = unify_diacritics(trim($row['person']));
@@ -149,8 +178,17 @@ TABLE;
                 if($p != '' && !isset($arr_names[$p]))
                     $arr_names[$p] = 1;
 
+                // check if person group mentioned
+                if(preg_match('/(*UTF8)\balle\b/i', $p, $match)) {
+                    $p = trim($p);
+                    if(!isset($mentioned_groups[$p]))
+                        $mentioned_groups[$p] = 1;
+                    else
+                        $mentioned_groups[$p]++;
+                    $p = " <span class='person-group'>$p</span>";
+                }
                 // check if last name present (ends with al-X, ar-X, ad-X, etc.)
-                if(preg_match('/(*UTF8)(?<nachname>(?<pre>(a|ā).)\-\s?(?<family>[^\s]+))$/i', $p, $match)) {
+                else if(preg_match('/(*UTF8)(?<nachname>(?<pre>(a|ā).)\-\s?(?<family>[^\s]+))$/i', $p, $match)) {
                     // make dmg plain
                     $forename = mb_substr($p, 0, mb_strlen($p) - mb_strlen($match['nachname']));
                     $db_search_name = $forename .' al-'.$match['family'];
@@ -173,7 +211,8 @@ TABLE;
                             $arr_new_names[] = array(
                                 $p,
                                 $forename,
-                                $match['family'] . ', al-'
+                                $match['family'] . ', al-',
+                                isset($person_groups[$match['family']]) ? $person_groups[$match['family']] : null
                             );
                         }
                     }
@@ -203,39 +242,73 @@ HTML;
         $c_new_names = count($arr_new_names);
 
         echo <<<HTML
-            <p>Springe weiter zu <a href="#neue">Neu zu erstellende Personendatensätze</a></p>
-            <a name="identifikation"></a>
-            <h2>Identifikation von Namen und Personen</h2>
-            <p>
-                Es sind $c_names verschiedene Namensangaben in der Originaltabelle.
-                Davon konnten $c_full vollständige Namen identifiziert werden.
-                Von diesen vollständigen Namen wurden $c_found in der DB gefunden$pct.
-            </p>
-            <p>Legende: <span class="name-full">Vollständiger Personenname</span> <span class="found-id">ID der gefundenen Person in der DB</span></p>
-HTML;
-        echo $table;
-
-        echo <<<HTML
-            <a name="neue"></a>
-            <h2>Neu zu erstellende Personendatensätze</h2>
-            <p>Springe nach oben zu <a href="#identifikation">Identifikation von Namen und Personen</a></p>
-            <p>Folgende $c_new_names als vollständig erkannte Namensangeben wurden in der DB nicht gefunden. Diese würden als neue Personen mit Vorname + Familienname wie folgt in der DB angelegt werden:</p>
-            <table class="table table-striped table-bordered table-responsive table-condensed">
-                <tr>
-                    <th>#</th>
-                    <th>Namensangabe aus der Tabelle</th>
-                    <th>Vorname</th>
-                    <th>Familienname</th>
-                </tr>
+            <ul class="nav nav-tabs">
+              <li class="active"><a data-toggle="tab" href="#liste">Namen &amp; Personen</a></li>
+              <li><a data-toggle="tab" href="#neue">Neue Personen</a></li>
+              <li><a data-toggle="tab" href="#gruppen">Personengruppen</a></li>
+            </ul>
+            <div class="tab-content">
+                <div id="liste" class="tab-pane active">
+                    <h2>Identifikation von Namen und Personen</h2>
+                    <p>
+                        Es sind $c_names verschiedene Namensangaben in der Originaltabelle.
+                        Davon konnten $c_full vollständige Namen identifiziert werden.
+                        Von diesen vollständigen Namen wurden $c_found in der DB gefunden$pct.
+                    </p>
+                    <p>Legende:
+                        <span class="name-full">Vollständiger Personenname</span>
+                        <span class="found-id">ID der gefundenen Person in der DB</span>
+                        <span class="person-group">Personengruppe</span>
+                    </p>
+                    $table
+                </div>
+                <div id="neue" class="tab-pane">
+                    <h2>Neu zu erstellende Personendatensätze</h2>
+                    <p>Folgende $c_new_names als vollständig erkannte Namensangeben wurden in der DB nicht gefunden. Diese würden als neue Personen mit Vorname + Familienname wie folgt in der DB angelegt werden:</p>
+                    <table class="table table-striped table-bordered table-responsive table-condensed">
+                        <tr>
+                            <th>#</th>
+                            <th>Namensangabe aus der Tabelle</th>
+                            <th>Vorname</th>
+                            <th>Familienname</th>
+                            <th>Personengruppe in DB</th>
+                        </tr>
 HTML;
         $c = 1;
         foreach($arr_new_names as $new_name) {
+            $group = '';
+            if(is_array($new_name[3]))
+                $group = $new_name[3]['group_name'] . ' (' . $new_name[3]['id'] . ')';
             echo sprintf(
-                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                $c++, $new_name[0], $new_name[1], $new_name[2]
+                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                $c++, $new_name[0], $new_name[1], $new_name[2], $group
             );
         }
-        echo '</table>';
+        echo <<<HTML
+                </table>
+HTML;
+
+        // PERSON GROUPS
+        $groups = '';
+        uasort($mentioned_groups, function($a, $b) {
+            return $a < $b ? 1 : -1;
+        });
+        $g_tot = array_sum($mentioned_groups);
+        foreach($mentioned_groups as $g => $c) {
+            $groups .= "<li>$g [{$c}x]</li>\n";
+        }
+
+        echo <<<HTML
+            </div>
+            <div id="gruppen" class="tab-pane">
+                <h2>Genannte Personengruppen</h2>
+                <p>Es gibt $g_tot Nennungen, die Gruppen von Personen referenzieren:</p>
+                <ol>
+                    $groups
+                </ol>
+            </div>
+        </div>
+HTML;
     }
 
     // ========================================================================================================
