@@ -204,7 +204,7 @@ HTML;
             <b>%s</b> Zeilen verarbeitet.
             <b>%s</b> identifizierte Dokumente existieren bereits in der DB.
             Nur jene <b>%s</b> Zeilen, in denen die Spalte \"Relevant?\" mit X markiert ist, sind für die Überführung in die DB relevant.
-        </p>", $c_lines, $c_relevant, $c_exist);
+        </p>", $c_lines, $c_exist, $c_relevant);
         echo $info, $table, '</table>', PHP_EOL;
     }
 
