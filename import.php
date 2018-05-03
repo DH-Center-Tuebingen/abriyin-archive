@@ -154,17 +154,22 @@ HTML;
             $dif = trim($doc['dif']);
             $db_sig = '';
             $match = array();
+            $has_sig_aufnahme = false;
             // match "B02-3: 25" or similar
             if(preg_match('/^(?<sig>[BD]\d+)-(?<bundle>[^:]+):\s*(?<aufnahme>.+)$/', $nr, $match)) {
                 $bundle = $match['bundle'];
-                $sig = ltrim($match['sig'], '0');
-                $aufnahme = ltrim($match['aufnahme'], '0');
-                $db_sig = sprintf('%s-%s', $sig, $aufnahme);
+                $has_sig_aufnahme = true;
             }
             else if(preg_match('/^(?<sig>[0123A]\d+)-(?<aufnahme>.+)$/', $nr, $match)) {
                 $bundle = '';
+                $has_sig_aufnahme = true;
+            }
+
+            if($has_sig_aufnahme) {
                 $sig = ltrim($match['sig'], '0');
                 $aufnahme = ltrim($match['aufnahme'], '0');
+                if($pos_slash = strpos($aufnahme, '/')) // e.g. "35/36" -> take only first aufnahme = "35"
+                    $aufnahme = substr($aufnahme, 0, $pos_slash);
                 $db_sig = sprintf('%s-%s', $sig, $aufnahme);
             }
 
