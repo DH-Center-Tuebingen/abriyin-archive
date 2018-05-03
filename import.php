@@ -187,7 +187,14 @@ HTML;
                 $db_doc_id = $db_docs[$db_sig];
                 $c_exist++;
             }
-            $relevant = !$backside && $db_doc_id == '';
+            $relevant =
+                // backsides are irrelevant (for now, need to be merged with front side)
+                !$backside
+                // docs already in the DB are irrelevant
+                && $db_doc_id == ''
+                // Wiederholungen are irrelevant
+                && !(starts_with('Wiederholung', $dif) || starts_with('Wdh', $dif))
+            ;
             if($relevant)
                 $c_relevant++;
             $table .= sprintf(
