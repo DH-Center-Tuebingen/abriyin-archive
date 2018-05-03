@@ -50,7 +50,7 @@ HTML;
             call_user_func('import_' . $_GET['proc']);
     }
 
-    function ends_with($s, $end) {
+    function ends_with($end, $s) {
         return substr($s, -strlen($end)) == $end;
     }
 
@@ -88,7 +88,7 @@ HTML;
         $sql = 'select id, dmg_plain(lastname_translit) ln, dmg_plain(forename_translit) fn, dmg_plain(byname_translit) bn from persons';
         foreach($db->query($sql, PDO::FETCH_ASSOC) as $row) {
             $ln = $row['ln'];
-            if(ends_with($ln, 'al-'))
+            if(ends_with('al-', $ln))
                 $ln = 'al-' . mb_substr($ln, 0, -3);
             $full_name = preg_replace('/[^a-z]/', '', $row['fn'] . $row['bn'] . $ln);
             $persons[$full_name] = $row['id'];
