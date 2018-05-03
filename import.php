@@ -187,7 +187,7 @@ HTML;
                 $db_doc_id = $db_docs[$db_sig];
                 $c_exist++;
             }
-            $relevant = !$backside && $db_doc_id == '' && in_array($typ, array('A', 'B'));
+            $relevant = !$backside && $db_doc_id == '';
             if($relevant)
                 $c_relevant++;
             $table .= sprintf(
