@@ -419,13 +419,14 @@ HTML;
                     <th>DMG Plain</th>-->
                 </tr>
 TABLE;
+        // names that contain other names should be ordered accordingly: e.g. first rabi ii, then rabi i !!
         $arab_months = array(
             'muharram' => 1,
             'safar' => 2,
-            'rabi i' => 3,
             'rabi ii' => 4,
-            'gumada i' => 5,
+            'rabi i' => 3,
             'gumada ii' => 6,
+            'gumada i' => 5,
             'ragab' => 7,
             'saban' => 8,
             'ramadan' => 9,
@@ -434,13 +435,21 @@ TABLE;
             'du lhigga' => 12,
 
             // exceptions
-            'rabi' => 3, 'r. i' => 3, 'r. ii' => 4,
+            'r. ii' => 4,
+            'r. i' => 3,
+            'rabi' => 3,
             'rabii ii' => 4,
-            'gumada' => 5, 'g i' => 5,
             'g ii' => 6,
-            'sauwal' => 10, 'sawal' => 10,
-            'alqada' => 11, 'al qada' => 11,
-            'alhagg' => 12, 'alhag' => 12, 'al hagg' => 12, 'al hag' => 12,
+            'g i' => 5,
+            'gumada' => 5,
+            'sauwal' => 10,
+            'sawal' => 10,
+            'alqada' => 11,
+            'al qada' => 11,
+            'alhagg' => 12,
+            'alhag' => 12,
+            'al hagg' => 12,
+            'al hag' => 12,
         );
 
         foreach($db->query($query, PDO::FETCH_ASSOC) as $row) {
