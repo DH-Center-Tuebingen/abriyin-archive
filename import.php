@@ -268,6 +268,12 @@ TABLE;
             // remove "seine frau"
             $pers = str_ireplace('seine frau', '', $pers);
 
+            // general replacements
+            $pers = preg_replace(
+                array('/(*UTF8)\bqais\b/i', '/(*UTF8)\bsaif\b/i', '/(*UTF8)\bfaiṣal\b/i', '/(*UTF8)\bsulaimān\b/i', '/(*UTF8)\bsamīḥ\b/i'),
+                array('Qays', 'Sayf', 'Fayṣal', 'Sulaymān', 'Samḥ'),
+                $pers);
+
             $pers = trim(preg_replace('/\s+/', ' ', $pers));
 
             // try to split up into multiple person infos
