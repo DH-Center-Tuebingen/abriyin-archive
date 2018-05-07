@@ -259,10 +259,15 @@ TABLE;
 
             $pdb = $pn = '';
 
-            // remove parentheses/brackets and contained text
             $pers = $orig;
+
+            // remove parentheses/brackets and contained text
             $pers = preg_replace('/\[.*?\]/', '', $pers);
             $pers = preg_replace('/\(.*?\)/', '', $pers);
+
+            // remove "seine frau"
+            $pers = str_ireplace('seine frau', '', $pers);
+
             $pers = trim(preg_replace('/\s+/', ' ', $pers));
 
             // try to split up into multiple person infos
@@ -271,6 +276,10 @@ TABLE;
             // for each person
             foreach($pax as $p) {
                 $p = trim($p);
+
+                if(in_array($p, array('Muḥsin')))
+                    $p = 'Muḥsin b. Zahrān b. Muḥammad al-ʿAbrī';
+
                 if($p != '' && !isset($arr_names[$p]))
                     $arr_names[$p] = 1;
 
@@ -291,7 +300,7 @@ TABLE;
                     db_get_single_val('select dmg_plain(?)', array($db_search_name), $name_plain, $db);
                     $name_plain = preg_replace('/[^a-z]/', '', $name_plain);
 
-                    if($name_plain == 'muhsinbzahranbmuhammadalabri')
+                    if(in_array($name_plain, array('muhsinbzahranbmuhammadalabri')))
                         $name_plain = 'muhsinbzahranbmuhammadbibrahimalabri';
 
                     if(!isset($arr_fullnames[$name_plain])) {
