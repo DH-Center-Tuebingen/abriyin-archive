@@ -150,8 +150,8 @@ HTML;
         $table = '';
         foreach($db->query('select * from neu', PDO::FETCH_ASSOC) as $doc) {
             $c_lines++;
-            $nr = trim($doc['nr']);
-            $dif = trim($doc['dif']);
+            $nr = preg_replace('/\s+/', ' ', trim($doc['nr']));
+            $dif = preg_replace('/\s+/', ' ', trim($doc['dif']));
             $db_sig = '';
             $match = array();
             $has_sig_aufnahme = false;
@@ -181,17 +181,18 @@ HTML;
             $typ = '&mdash;';
             if(preg_match('/^(?<typ>A|B|MS)/', $dif, $match))
                 $typ = $match['typ'];
-            $backside = preg_match('/\br[0123ABD]\d+-\d/', $dif);
+            $backside = preg_match('/\br(?<frontside>[0123ABD]\d+-\d\:\s?\d+)\b/', $dif, $match);
+            $frontside = $backside ? $match['frontside'] : false;
             $db_doc_id = '';
             if(isset($db_docs[$db_sig])) {
                 $db_doc_id = $db_docs[$db_sig];
                 $c_exist++;
             }
             $relevant =
-                // backsides are irrelevant (for now, need to be merged with front side)
-                !$backside
+                // backsides are relevant -- need to be merged with front side
+                // !$backside
                 // docs already in the DB are irrelevant
-                && $db_doc_id == ''
+                $db_doc_id == ''
                 // Wiederholungen are irrelevant
                 && !(starts_with('Wiederholung', $dif) || starts_with('Wdh', $dif))
             ;
@@ -206,7 +207,7 @@ HTML;
                 $aufnahme,
                 $dif,
                 $typ,
-                $backside ? 'X' : '',
+                $backside ? $frontside : '',
                 $db_sig,
                 $db_doc_id,
                 $relevant ? 'X' : ''
@@ -268,7 +269,7 @@ TABLE;
             // remove "seine frau"
             $pers = str_ireplace('seine frau', '', $pers);
 
-            // general replacements
+            // general replacements of Names
             $pers = preg_replace(
                 array('/(*UTF8)\bqais\b/i', '/(*UTF8)\bsaif\b/i', '/(*UTF8)\bfaiṣal\b/i', '/(*UTF8)\bsulaimān\b/i', '/(*UTF8)\bsamīḥ\b/i'),
                 array('Qays', 'Sayf', 'Fayṣal', 'Sulaymān', 'Samḥ'),
