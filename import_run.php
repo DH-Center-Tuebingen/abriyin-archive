@@ -194,7 +194,6 @@
         // ----------------------------------------------------------------------------------------------------
         protected function personen_ermitteln() {
         // ----------------------------------------------------------------------------------------------------
-            Person::db_personen_auslesen();
             foreach(array('adressat', 'absender', 'weitere') as $person_feld) {
                 $this->{$person_feld} = Person::erzeuge($this->tabellenzeile->{$person_feld}, $this);
             }
@@ -218,12 +217,25 @@
                 $familienname_kanon_plain = null, // immer "al-X" statt z.B. "X, al-"
                 $vollname_kanon_plain = null,
                 $personengruppe = null,
+                $vollname = null,
+                $originaltext = null,
                 $notizen = array();
 
         // ----------------------------------------------------------------------------------------------------
-        public static function db_personen_auslesen() {
+        public function make_vollname() {
         // ----------------------------------------------------------------------------------------------------
-            Personengruppe::db_personengruppen_auslesen();
+            $this->vollname = '';
+            if($this->familienname != '')
+                $this->vollname = $this->familienname;
+            $this->vollname .= ', ' . $this->vorname;
+            $this->vollname .= ', ' . $this->beiname;
+            $this->vollname = trim(preg_replace('/\s+/', ' ', $this->vollname), ' ,');
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function personen_einlesen() {
+        // ----------------------------------------------------------------------------------------------------
+            Personengruppe::personengruppen_auslesen();
             Person::$alle = array();
             $sql = "
                 select id,
@@ -249,6 +261,7 @@
                 $p->vollname_kanon_plain = preg_replace('/[^a-z]/', '', $row['fn'] . $row['bn'] . $p->familienname_kanon_plain);
                 if(isset(Personengruppe::$db_groups[$p->familienname]))
                     $p->personengruppe = Personengruppe::$db_groups[$p->familienname];
+                $p->make_vollname();
                 Person::$alle[$p->vollname_kanon_plain] = $p;
             }
         }
@@ -284,7 +297,7 @@
 
             // for each person
             foreach($pax as $p) {
-                $p = trim($p);
+                $p = $orig_text = trim($p);
 
                 // verschiedene Schreibweisen von Muhsin
                 if(in_array($p, array(
@@ -303,6 +316,7 @@
                 }
                 else {
                     $pers_obj = new Person;
+                    $pers_obj->originaltext = $orig_text;
 
                     // check if group of persons mentioned
                     if(preg_match('/(*UTF8)\balle\b/i', $p, $match)) {
@@ -352,8 +366,10 @@
                         $pers_obj = null;
                     }
 
-                    if($pers_obj !== null)
+                    if($pers_obj !== null) {
+                        $pers_obj->make_vollname();
                         Person::$arr_orig_names[$p] = $pers_obj;
+                    }
                 }
 
                 if($pers_obj !== null)
@@ -374,7 +390,7 @@
                 $family_name = null;
 
         // ----------------------------------------------------------------------------------------------------
-        public static function db_personengruppen_auslesen() {
+        public static function personengruppen_auslesen() {
         // ----------------------------------------------------------------------------------------------------
             $sql = "
                 select id, group_name,
@@ -410,7 +426,8 @@
         public static $alle = array();
 
         public  $db_id = false,
-                $aufnahme = null;
+                $aufnahme = null,
+                $notizen = array();
                 //$weitere_aufnahmen = array();
 
         // ----------------------------------------------------------------------------------------------------
@@ -426,6 +443,11 @@
 
             $d = new Dokument;
             $d->aufnahme = $a;
+            $z = $a->tabellenzeile;
+            $d->notizen[] = sprintf(
+                "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
+                $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
+            );
             Dokument::$alle[$a->signatur] = $d;
         }
     }
@@ -459,8 +481,9 @@
 
         Datenbank::start();
         Datenbank::dokumente_einlesen();
+        Person::personen_einlesen();
 
-        $sql = "select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 200";
+        $sql = "select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 2000";
         foreach(Datenbank::$db->query($sql, PDO::FETCH_ASSOC) as $doc)
             Tabellenzeile::einlesen($doc);
 
@@ -469,26 +492,175 @@
 
         foreach(Aufnahme::$alle as $z_nr => $a)
             Dokument::aus_aufnahme($a);
+
+        result_preview();
     }
 
     // ========================================================================================================
     function result_preview() {
     // ========================================================================================================
+        echo <<<X
+            <style>
+                ul {
+                    padding-left: 1.5em;
+                    margin-bottom: 0;
+                }
+                .vorname {
+                    background-color: #ffccff;
+                }
+                .nachname {
+                    background-color: #66ff66;
+                }
+                .gruppe {
+                    background-color: lightgray;
+                    color: dimgray;
+                    white-space: nowrap;
+                }
+                .dbid {
+                    background-color: LemonChiffon;
+                }
+                .nw {
+                    white-space: nowrap;
+                }
+            </style>
+X;
         $c_zeilen = count(Tabellenzeile::$alle);
         $c_aufn = count(Aufnahme::$alle);
-        $c_doks = count(Dokument:$alle);
+        $c_doks = count(Dokument::$alle);
         $c_pers = count(Person::$alle);
 
+        uasort(Person::$alle, function($a, $b) {
+            //return strcmp($a->vollname, $b->vollname);
+            $cmp = strcmp($a->familienname, $b->familienname);
+            if($cmp == 0)
+                $cmp = strcmp($a->vorname, $b->vorname);
+            if($cmp == 0)
+                $cmp = strcmp($a->beiname, $b->beiname);
+            return $cmp;
+        });
+        uasort(Dokument::$alle, function($a, $b) {
+            if(!$a->aufnahme || !$b->aufnahme)
+                return -1;
+            return strcmp($a->aufnahme->signatur, $b->aufnahme->signatur);
+        });
+
+        $aufnahmen = '';
+        /*$c = 0;
+        foreach(Aufnahme::$alle as $foo => $a) {
+            $aufnahmen .= sprintf("<h4># %s</h4>\n<pre>%s</pre><hr />\n", ++$c, var_export($a, true));
+        }*/
+
         $c_doks_neu = 0;
-        foreach(Dokument::$alle as $foo -> $d)
-            if($d->db_id === false)
-                $c_doks_neu++;
+        $dokumente = <<<TABLE
+            <p>
+                Legende:
+                <span class="nachname">Familienname</span>
+                <span class="vorname">Vorname</span>
+                <span class="gruppe">Personengruppe</span>
+                <span class="dbid">ID in der Datenbank</span>
+            </p>
+            <table class="table table-striped table-bordered table-responsive table-condensed">
+            <tr>
+                <th>Sig.</th>
+                <th>Bündel</th>
+                <th>Jahr</th>
+                <th>Monat</th>
+                <th>Tag</th>
+                <th>Adressaten</th>
+                <th>Absender</th>
+                <th>Weitere</th>
+                <th>Orig. Nr</th>
+                <th>Orig. Dif</th>
+                <th>Orig. Jahr</th>
+                <th>Orig. Datum</th>
+                <th>Orig. Adressaten</th>
+                <th>Orig. Absender</th>
+                <th>Orig. Weitere</th>
+            </tr>
+TABLE;
+        foreach(Dokument::$alle as $foo => $d) {
+            if($d->db_id !== false)
+                continue;
+            ++$c_doks_neu;
+            foreach(array('adressat', 'absender', 'weitere') as $pers_typ) {
+                ${$pers_typ} = '';
+                if(count($d->aufnahme->{$pers_typ}) == 0)
+                    continue;
+                ${$pers_typ} = '<ul>';
+                foreach($d->aufnahme->{$pers_typ} as $pers) {
+                    $n = '';
+                    if($pers->familienname)
+                        $n .= "<span class='nachname'>{$pers->familienname}</span>";
+                    if($pers->familienname && $pers->vorname)
+                        $n .= ', ';
+                    if($pers->vorname)
+                        $n .= "<span class='vorname'>{$pers->vorname}</span>";
+                    if($pers->personengruppe)
+                        $n .= " <span class='nw gruppe'><span class='glyphicon glyphicon-link'></span> {$pers->personengruppe->group_name}</span>";
+                    if($pers->db_id)
+                        $n .= " <span class='nw dbid'><span class='glyphicon glyphicon-record'></span> {$pers->db_id}</span>";
+                    ${$pers_typ} .= "<li>$n</li>";
+                }
+                ${$pers_typ} .= '</ul>';
+            }
+            $dokumente .= sprintf(
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->aufnahme->signatur, $d->aufnahme->buendel, $d->aufnahme->datum_jahr, $d->aufnahme->datum_monat, $d->aufnahme->datum_tag, $adressat, $absender, $weitere, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
+            );
+        }
+        $dokumente .= '</table>';
 
         $c_pers_neu = 0;
-        foreach(Person::$alle as $foo -> $p)
-            if($p->db_id === false)
-                $c_pers_neu++;
+        $c_group_found = 0;
+        $personen = <<<TABLE
+            <table class="table table-striped table-bordered table-responsive table-condensed">
+            <tr>
+                <th>#</th>
+                <th>Familienname</th>
+                <th>Vorname</th>
+                <th>Beiname</th>
+                <th>Personengruppe</th>
+                <th>Originaltext</th>
+            </tr>
+TABLE;
+        foreach(Person::$alle as $foo => $p) {
+            if($p->db_id !== false)
+                continue;
+            if($p->personengruppe)
+                $c_group_found++;
+            $personen .= sprintf(
+                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
+                ++$c_pers_neu, $p->familienname, $p->vorname, $p->beiname, $p->personengruppe ? $p->personengruppe->group_name : '', $p->originaltext
+            );
+        }
+        $personen .= '</table>';
 
         // tabbed output of all this
+        echo <<<HTML
+            <p><ul>
+                <li>$c_zeilen Tabellenzeilen</li>
+                <li>$c_aufn Aufnahmen aus Tabellenzeilen extrahiert</li>
+                <li>$c_doks_neu neue Dokumente ($c_doks insgesamt)</li>
+                <li>$c_pers_neu neue Personen ($c_pers insgesamt); bei $c_group_found von den neuen Personen konnte eine bestehende Personengruppe ermittelt werden</li>
+            </ul></p>
+            <ul class="nav nav-tabs">
+                <li class="active"><a data-toggle="tab" href="#dokumente">Neue Dokumente</a></li>
+                <li><a data-toggle="tab" href="#personen">Neue Personen</a></li>
+                <!--<li><a data-toggle="tab" href="#aufnahmen">Aufnahmen</a></li>-->
+            </ul>
+            <div class="tab-content">
+                <div id="dokumente" class="tab-pane active">
+                    <h3>Neue Dokumente</h3>
+                    $dokumente
+                </div>
+                <div id="personen" class="tab-pane">
+                    <h3>Neue Personen</h3>
+                    $personen
+                </div>
+                <!--<div id="aufnahmen" class="tab-pane ">
+                    <h3>Aufnahmen</h3>
+                    $aufnahmen
+                </div>-->
+            </div>
+HTML;
     }
 ?>
