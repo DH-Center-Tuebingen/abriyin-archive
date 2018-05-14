@@ -56,7 +56,7 @@
             if(!$a->ermittle_signatur())
                 return false;
 
-            if(isset(Dokument::$db_docs[$a->signatur])) {
+            if(isset(Dokument::$alle[$a->signatur])) {
                 Aufnahme::$anz_bereits_existierende++;
                 return false; // existiert bereits in der DB
             }
@@ -195,18 +195,8 @@
         protected function personen_ermitteln() {
         // ----------------------------------------------------------------------------------------------------
             Person::db_personen_auslesen();
-            Personengruppe::db_personengruppen_auslesen();
-
-            $c = 1;
-            $arr_fullnames = array();
-            $arr_names = array();
-            $c_found = 0;
-            $new_names = array();
-            $mentioned_groups = array();
-            //$person_groups = get_db_person_groups($db);
-
             foreach(array('adressat', 'absender', 'weitere') as $person_feld) {
-                $this->{$person_feld} = Person::erzeuge($this->tabellenzeile->{$person_feld});
+                $this->{$person_feld} = Person::erzeuge($this->tabellenzeile->{$person_feld}, $this);
             }
         }
     }
@@ -214,7 +204,8 @@
     // ========================================================================================================
     class Person {
     // ========================================================================================================
-        public static $db_persons = array();
+        public static $alle = array();
+        public static $arr_orig_names = array();
 
         public  $db_id = false,
                 $sex = null,
@@ -232,7 +223,8 @@
         // ----------------------------------------------------------------------------------------------------
         public static function db_personen_auslesen() {
         // ----------------------------------------------------------------------------------------------------
-            Person::$db_persons = array();
+            Personengruppe::db_personengruppen_auslesen();
+            Person::$alle = array();
             $sql = "
                 select id,
                     sex,
@@ -246,7 +238,7 @@
             ";
             foreach(Datenbank::$db->query($sql, PDO::FETCH_ASSOC) as $row) {
                 $p = new Person;
-                $p->id = $row['id'];
+                $p->db_id = $row['id'];
                 $p->sex = $row['sex'];
                 $p->vorname = $row['forename_translit'];
                 $p->beiname = $row['byname_translit'];
@@ -255,19 +247,19 @@
                 if(ends_with('al-', $p->familienname_plain))
                     $p->familienname_kanon_plain = 'al-' . mb_substr($p->familienname_plain, 0, -3);
                 $p->vollname_kanon_plain = preg_replace('/[^a-z]/', '', $row['fn'] . $row['bn'] . $p->familienname_kanon_plain);
-                Person::$db_persons[$p->vollname_kanon_plain] = $p;
+                if(isset(Personengruppe::$db_groups[$p->familienname]))
+                    $p->personengruppe = Personengruppe::$db_groups[$p->familienname];
+                Person::$alle[$p->vollname_kanon_plain] = $p;
             }
         }
-
-        public static $arr_names = array();
-        public static $arr_fullnames = array();
 
         // ----------------------------------------------------------------------------------------------------
         public static function erzeuge($text, $aufnahme) {
         // ----------------------------------------------------------------------------------------------------
+            $persons_found = array();
             $orig = unify_diacritics(trim($text));
             if($orig == '')
-                continue;
+                return $persons_found;
 
             $pdb = $pn = '';
             $pers = $orig;
@@ -292,77 +284,83 @@
 
             // for each person
             foreach($pax as $p) {
-                $pers_obj = new Person;
                 $p = trim($p);
 
-                if(in_array($p, array('Muḥsin')))
-                    $p = 'Muḥsin b. Zahrān b. Muḥammad al-ʿAbrī';
-
-                if($p != '' && !isset($arr_names[$p]))
-                    Person::$arr_names[$p] = 1;
-
-                // check if group of persons mentioned
-                if(preg_match('/(*UTF8)\balle\b/i', $p, $match)) {
-                    $pers_obj->notizen[] = "Text \"$p\" wurde als Person angelegt, scheint aber eine Gruppe von Personen zu sein";
-                    $pers_obj->vorname = $p;
+                // verschiedene Schreibweisen von Muhsin
+                if(in_array($p, array(
+                    'Muḥsin',
+                    'Muḥsin b. Zahrān',
+                    'Muḥsin b. Zahrān al-ʿAbrī',
+                    'Muḥsin b. Zahrān b. Muḥammad',
+                    'Muḥsin b. Zahrān b. Muḥammad al-ʿAbrī'
+                ))) {
+                    $p = 'Muḥsin b. Zahrān b. Muḥammad b. Ibrāhīm al-ʿAbrī';
                 }
-                // check if last name present (ends with al-X, ar-X, ad-X, etc.)
-                else if(preg_match('/(*UTF8)(?<nachname>(?<pre>(a|ā).)\-\s?(?<family>[^\s]+))$/i', $p, $match)) {
-                    // make dmg plain
-                    $forename = mb_substr($p, 0, mb_strlen($p) - mb_strlen($match['nachname']));
-                    $db_search_name = $forename .' al-'.$match['family'];
-                    db_get_single_val('select dmg_plain(?)', array($db_search_name), $name_plain, Datenbank::$db);
-                    $name_plain = preg_replace('/[^a-z]/', '', $name_plain);
 
-                    //TODONEXT: ZIEL UMSTELLEN VON TABELLENAUSGABE IN PERSONEN ERZEUGEN FÜR JEDE ZEILE!
+                $pers_obj = null;
+                if($p != '' && isset(Person::$arr_orig_names[$p])) {
+                    $pers_obj = Person::$arr_orig_names[$p];
+                }
+                else {
+                    $pers_obj = new Person;
 
-                    if(in_array($name_plain, array('muhsinbzahranbmuhammadalabri')))
-                        $name_plain = 'muhsinbzahranbmuhammadbibrahimalabri';
-
-                    if(!isset($arr_fullnames[$name_plain])) {
-                        $arr_fullnames[$name_plain] = false;
-                        foreach($persons_db as $db_name => $db_id) {
-                            if($name_plain == $db_name) {
-                                $c_found++;
-                                $arr_fullnames[$name_plain] = $db_id;
-                                break;
-                            }
+                    // check if group of persons mentioned
+                    if(preg_match('/(*UTF8)\balle\b/i', $p, $match)) {
+                        $name_plain = preg_replace('/[^a-z]/', '', $p);
+                        if(isset(Person::$alle[$name_plain])) {
+                            $pers_obj = Person::$alle[$name_plain];
                         }
-                        if(!$arr_fullnames[$name_plain]) {
-                            $arr_new_names[] = array(
-                                $p,
-                                $forename,
-                                $match['family'] . ', al-',
-                                isset($person_groups[$match['family']]) ? $person_groups[$match['family']] : null
-                            );
+                        else {
+                            $pers_obj->notizen[] = sprintf('"%s" wurde als Person angelegt, scheint aber eine Gruppe von Personen zu sein [P_NAME_GROUP]. Voller Eintrag: "%s"', $p, $pers);
+                            $pers_obj->vorname = $p;
+                            Person::$alle[$name_plain] = $pers_obj;
                         }
                     }
+                    // check if last name present (ends with al-X, ar-X, ad-X, etc.)
+                    else if(preg_match('/(*UTF8)(?<nachname>(?<pre>(a|ā).)\-\s?(?<family>[^\s]+))$/i', $p, $match)) {
+                        // make dmg plain
+                        $forename = trim(mb_substr($p, 0, mb_strlen($p) - mb_strlen($match['nachname'])));
+                        $db_search_name = $forename .' al-'.$match['family'];
+                        db_get_single_val('select dmg_plain(?)', array($db_search_name), $name_plain, Datenbank::$db);
+                        $name_plain = preg_replace('/[^a-z]/', '', $name_plain);
+                        $pers_obj->vollname_kanon_plain = $name_plain;
+                        if(isset(Person::$alle[$name_plain])) {
+                            $pers_obj = Person::$alle[$name_plain];
+                        }
+                        else {
+                            $pers_obj->vorname = $forename;
+                            $pers_obj->familienname = $match['family'] . ', al-';
+                            if(isset(Personengruppe::$db_groups[$pers_obj->familienname]))
+                                $pers_obj->personengruppe = Personengruppe::$db_groups[$pers_obj->familienname];
+                            Person::$alle[$name_plain] = $pers_obj;
+                        }
+                    }
+                    // any other name -> assume first name
+                    else if(preg_replace('/[^a-z]/', '', $p) != '') {
+                        $name_plain = preg_replace('/[^a-z]/', '', $p);
+                        if(isset(Person::$alle[$name_plain])) {
+                            $pers_obj = Person::$alle[$name_plain];
+                        }
+                        else {
+                            $pers_obj->notizen[] = sprintf('"%s" konnte nicht als voller Name identifiziert werden. Der Text wurde als Vorname interpretiert [P_NAME_PARTIAL]. Voller Eintrag: "%s"', $p, $pers);
+                            $pers_obj->vorname = $p;
+                            Person::$alle[$name_plain] = $pers_obj;
+                        }
+                    }
+                    // nothing to recognize
+                    else {
+                        $pers_obj = null;
+                    }
 
-                    $p = "<span class='name-full'>$p</span>";
-                    if($arr_fullnames[$name_plain])
-                        $p .= " <span class='found-id'>({$arr_fullnames[$name_plain]})</span>";
+                    if($pers_obj !== null)
+                        Person::$arr_orig_names[$p] = $pers_obj;
                 }
+
+                if($pers_obj !== null)
+                    $persons_found[] = $pers_obj;
             }
 
-/*                    $table .= <<<HTML
-                <tr>
-                    <td>$c</td>
-                    <td>$orig</td>
-                    <td><ul>$split</ul></td>
-                </tr>
-HTML;
-*/
-            /*$c = 1;
-            foreach($arr_new_names as $new_name) {
-                $group = '';
-                if(is_array($new_name[3]))
-                    $group = $new_name[3]['group_name'] . ' (' . $new_name[3]['id'] . ')';
-                echo sprintf(
-                    "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                    $c++, $new_name[0], $new_name[1], $new_name[2], $group
-                );
-            }
-            */
+            return $persons_found;
         }
     }
 
@@ -379,7 +377,9 @@ HTML;
         public static function db_personengruppen_auslesen() {
         // ----------------------------------------------------------------------------------------------------
             $sql = "
-                select id, group_name, left(family_name, strpos(family_name, ',') - 1) family_name
+                select id, group_name,
+                -- left(family_name, strpos(family_name, ',') - 1) family_name
+                family_name
                 from (
                 select g.id, g.name_translit group_name, (
                     select lastname_translit from person_of_group pg, persons p
@@ -399,7 +399,7 @@ HTML;
                 $g->db_id = $row['id'];
                 $g->group_name = $row['group_name'];
                 $g->family_name = $row['family_name'];
-                Personengruppe::$db_groups[$g->family_name] = $row;
+                Personengruppe::$db_groups[$g->family_name] = $g;
             }
         }
     }
@@ -407,10 +407,27 @@ HTML;
     // ========================================================================================================
     class Dokument {
     // ========================================================================================================
-        public static $db_docs = array();
+        public static $alle = array();
 
-        public  $db_id = null,
-                $aufnahmen = array();
+        public  $db_id = false,
+                $aufnahme = null;
+                //$weitere_aufnahmen = array();
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function aus_aufnahme($a) {
+        // ----------------------------------------------------------------------------------------------------
+            // already in DB?
+            if(isset(Dokument::$alle[$a->signatur]))
+                return;
+
+            if($a->ist_rueckseite) {
+                return; // TODO: was wenn info auf der Rückseite ist?
+            }
+
+            $d = new Dokument;
+            $d->aufnahme = $a;
+            Dokument::$alle[$a->signatur] = $d;
+        }
     }
 
     // ========================================================================================================
@@ -427,37 +444,51 @@ HTML;
         // ----------------------------------------------------------------------------------------------------
         public static function dokumente_einlesen() {
         // ----------------------------------------------------------------------------------------------------
-            foreach(Datenbank::$db->query('select id, signature from documents', PDO::FETCH_ASSOC) as $row)
-                Dokument::$db_docs[$row['signature']] = $row['id'];
+            foreach(Datenbank::$db->query('select id, signature from documents', PDO::FETCH_ASSOC) as $row) {
+                $d = new Dokument;
+                $d->db_id = $row['id'];
+                Dokument::$alle[$row['signature']] = $d;
+            }
         }
     }
 
     // ========================================================================================================
     function import_test_run() {
     // ========================================================================================================
-        echo <<<HTML
-            <h2>Import-Testlauf</h2>
-HTML;
+        echo '<h2>Import-Testlauf</h2>', PHP_EOL;
+
         Datenbank::start();
         Datenbank::dokumente_einlesen();
 
-        $c_doc = $c_lines = $c_relevant = $c_exist = 0;
-
-        // Alle Tabellenzeilen einlesen
-        foreach(Datenbank::$db->query("select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 500", PDO::FETCH_ASSOC) as $doc)
+        $sql = "select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 200";
+        foreach(Datenbank::$db->query($sql, PDO::FETCH_ASSOC) as $doc)
             Tabellenzeile::einlesen($doc);
 
         foreach(Tabellenzeile::$alle as $z)
             Aufnahme::aus_zeile($z);
 
-        echo sprintf(
-            "%s Zeilen, %s Aufnahmen, %s vorhanden in der DB, %s Personen in DB",
-            count(Tabellenzeile::$alle),
-            count(Aufnahme::$alle),
-            Aufnahme::$anz_bereits_existierende,
-            count(Person::$db_persons)
-        );
+        foreach(Aufnahme::$alle as $z_nr => $a)
+            Dokument::aus_aufnahme($a);
+    }
 
-        // Nun Aufnahmen extrahieren
+    // ========================================================================================================
+    function result_preview() {
+    // ========================================================================================================
+        $c_zeilen = count(Tabellenzeile::$alle);
+        $c_aufn = count(Aufnahme::$alle);
+        $c_doks = count(Dokument:$alle);
+        $c_pers = count(Person::$alle);
+
+        $c_doks_neu = 0;
+        foreach(Dokument::$alle as $foo -> $d)
+            if($d->db_id === false)
+                $c_doks_neu++;
+
+        $c_pers_neu = 0;
+        foreach(Person::$alle as $foo -> $p)
+            if($p->db_id === false)
+                $c_pers_neu++;
+
+        // tabbed output of all this
     }
 ?>
