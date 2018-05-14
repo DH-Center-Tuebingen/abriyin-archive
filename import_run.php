@@ -483,7 +483,7 @@
         Datenbank::dokumente_einlesen();
         Person::personen_einlesen();
 
-        $sql = "select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 2000";
+        $sql = "select *, replace(dmg_plain(datum), E'\011', ' ') plain_datum from neu limit 20000";
         foreach(Datenbank::$db->query($sql, PDO::FETCH_ASSOC) as $doc)
             Tabellenzeile::einlesen($doc);
 
@@ -522,6 +522,13 @@
                 .nw {
                     white-space: nowrap;
                 }
+                table {
+                    display: none;
+                }
+                .loading {
+                    font-weight: bold;
+                    font-size: larger;
+                }
             </style>
 X;
         $c_zeilen = count(Tabellenzeile::$alle);
@@ -559,6 +566,7 @@ X;
                 <span class="gruppe">Personengruppe</span>
                 <span class="dbid">ID in der Datenbank</span>
             </p>
+            <p class='loading'>Tabelle lädt ...</p>
             <table class="table table-striped table-bordered table-responsive table-condensed">
             <tr>
                 <th>Sig.</th>
@@ -612,6 +620,7 @@ TABLE;
         $c_pers_neu = 0;
         $c_group_found = 0;
         $personen = <<<TABLE
+            <p class='loading'>Tabelle lädt ...</p>
             <table class="table table-striped table-bordered table-responsive table-condensed">
             <tr>
                 <th>#</th>
@@ -661,6 +670,12 @@ TABLE;
                     $aufnahmen
                 </div>-->
             </div>
+            <script>
+                $(document).ready(function() {
+                    $('.loading').toggle();
+                    $('table').toggle();
+                });
+            </script>
 HTML;
     }
 ?>
