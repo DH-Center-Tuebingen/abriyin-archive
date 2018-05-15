@@ -286,8 +286,8 @@
 
             // general replacements of Names
             $pers = preg_replace(
-                array('/(*UTF8)\bqais\b/i', '/(*UTF8)\bsaif\b/i', '/(*UTF8)\bfaiṣal\b/i', '/(*UTF8)\bsulaimān\b/i', '/(*UTF8)\bsamīḥ\b/i'),
-                array('Qays', 'Sayf', 'Fayṣal', 'Sulaymān', 'Samḥ'),
+                array('/(*UTF8)\bqais\b/i', '/(*UTF8)\bsaif\b/i', '/(*UTF8)\bfaiṣal\b/i', '/(*UTF8)\bsulaimān\b/i', '/(*UTF8)\bsamīḥ\b/i', '/(*UTF8)\bsamiḥ\b/i', '/(*UTF8)\šīḫa\b/i'),
+                array('Qays', 'Sayf', 'Fayṣal', 'Sulaymān', 'Samḥ', 'Samḥ', 'Šayḫa'),
                 $pers);
 
             $pers = trim(preg_replace('/\s+/', ' ', $pers));
