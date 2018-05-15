@@ -292,6 +292,9 @@
 
             $pers = trim(preg_replace('/\s+/', ' ', $pers));
 
+            if(in_array(mb_strtolower(preg_replace('/\s/', '', $pers)), array('o.a.', 'oa')))
+                return $persons_found;
+
             // try to split up into multiple person infos
             $pax = preg_split('/[\/,;+]|und/', $pers);
 
