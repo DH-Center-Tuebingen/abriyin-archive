@@ -232,10 +232,10 @@
                 $vorderseite = Aufnahme::$alle[$this->nr_kehrseite];
                 $vorderseite->dokument->weitere_aufnahmen[] = $this;
                 $this->dokument = $vorderseite->dokument;
+                $this->dokument->rueckseiteninfo_einpflegen($this); // merge names into dokument
             }
             else {
                 $this->tabellenzeile->relevant = false;
-
                 if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
                     $this->tabellenzeile->notizen[] = "Rückseite; Vorderseite bereits irrelevant [Z_FRONT_IRRELEVANT]";
                 else
@@ -505,7 +505,17 @@
         public static $alle = array();
 
         public  $db_id = false,
+                $signatur = null,
+                $buendel = null,
+                $datum_jahr = null,
+                $datum_monat = null,
+                $datum_tag = null,
+                $adressat = array(),
+                $absender = array(),
+                $weitere = array(),
+                $dok_typ = null,
                 $aufnahme = null,
+                $inhalt = null,
                 $weitere_aufnahmen = array(),
                 $edit_status = null,
                 $notizen = array();
@@ -525,12 +535,43 @@
             $d->edit_status = 'imported';
             $d->aufnahme = $a;
             $d->aufnahme->dokument = $d;
+            $d->inhalt = $d->aufnahme->tabellenzeile->inhalt;
+
+            // copy all info from frontside aufnahme
+            foreach(array('signatur', 'buendel', 'datum_jahr', 'datum_monat', 'datum_tag', 'adressat', 'absender', 'weitere', 'dok_typ') as $prop)
+                $d->{$prop} = $d->aufnahme->{$prop};
+
             $z = $a->tabellenzeile;
             $d->notizen[] = sprintf(
                 "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
                 $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
             );
             Dokument::$alle[$a->signatur] = $d;
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public function rueckseiteninfo_einpflegen($aufnahme) {
+        // ----------------------------------------------------------------------------------------------------
+            // Inhalt anhängen
+            if($aufnahme->tabellenzeile->inhalt) {
+                if($this->inhalt === null)
+                    $this->inhalt = '';
+                $this->inhalt .= (!$this->inhalt ? "\n\n" : '') . $aufnahme->tabellenzeile->inhalt;
+            }
+
+            // Personeninformationen anhängen
+            foreach(array('adressat', 'absender', 'weitere') as $pers_typ) {
+                foreach($aufnahme->{$pers_typ} as $personen) {
+                    // TODO check if person already exists, otherwise add from rückseite
+                }
+            }
+
+            // Notiz für Quellzeile aus der Tabelle
+            $z = $aufnahme->tabellenzeile;
+            $this->notizen[] = sprintf(
+                "ORIGINALZEILE RÜCKSEITE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
+                $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
+            );
         }
     }
 
@@ -632,7 +673,7 @@ X;
         uasort(Dokument::$alle, function($a, $b) {
             if(!$a->aufnahme || !$b->aufnahme)
                 return -1;
-            return strcmp($a->aufnahme->signatur, $b->aufnahme->signatur);
+            return strcmp($a->signatur, $b->signatur);
         });
 
         $aufnahmen = <<<TABLE
@@ -695,10 +736,10 @@ TABLE;
             ++$c_doks_neu;
             foreach(array('adressat', 'absender', 'weitere') as $pers_typ) {
                 ${$pers_typ} = '';
-                if(count($d->aufnahme->{$pers_typ}) == 0)
+                if(count($d->{$pers_typ}) == 0)
                     continue;
                 ${$pers_typ} = '<ul>';
-                foreach($d->aufnahme->{$pers_typ} as $pers) {
+                foreach($d->{$pers_typ} as $pers) {
                     $n = '';
                     if($pers->familienname)
                         $n .= "<span class='nachname'>{$pers->familienname}</span>";
@@ -719,7 +760,7 @@ TABLE;
                 $weitere_aufn .= ($weitere_aufn == '' ? '' : '; ') . $a->tabellenzeile->nr;
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->aufnahme->signatur, $d->aufnahme->buendel, $d->aufnahme->datum_jahr, $d->aufnahme->datum_monat, $d->aufnahme->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
             );
         }
         $dokumente .= '</table>';
