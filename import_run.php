@@ -65,7 +65,7 @@
             if(preg_match('/^(?<typ>A|B|MS)/', $z->dif, $match))
                 $a->typ = $match['typ'];
 
-            $a->ist_rueckseite = preg_match('/\br(?<frontside>[0123ABD]\d+-\d\:\s?\d+)\b/', $z->dif, $match);
+            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d\:\s?\d+)\b/', $z->dif, $match);
             $a->nr_kehrseite = $a->ist_rueckseite ? $match['frontside'] : null;
 
             $relevant = !(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif));
