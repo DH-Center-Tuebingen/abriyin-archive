@@ -323,6 +323,9 @@
                 else {
                     $pers_obj = new Person;
                     $pers_obj->originaltext = $orig_text;
+                    $pers_obj->notizen[] = sprintf('Originaltext: "%s" [P_ORIG_TEXT]', $orig_text);
+
+                    $pers_obj->sex = (mb_strpos($orig_text, 'bint') === false ? 'm' : 'f');
 
                     // check if group of persons mentioned
                     if(preg_match('/(*UTF8)\balle\b/i', $p, $match)) {
