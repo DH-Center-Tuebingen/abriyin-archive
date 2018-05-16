@@ -311,7 +311,8 @@
                     'Muḥsin b. Zahrān',
                     'Muḥsin b. Zahrān al-ʿAbrī',
                     'Muḥsin b. Zahrān b. Muḥammad',
-                    'Muḥsin b. Zahrān b. Muḥammad al-ʿAbrī'
+                    'Muḥsin b. Zahrān b. Muḥammad al-ʿAbrī',
+                    'Muḥsin b. Zahrān b. Muḥammad al-ʿAbr' // typo obviously
                 ))) {
                     $p = 'Muḥsin b. Zahrān b. Muḥammad b. Ibrāhīm al-ʿAbrī';
                 }
@@ -356,8 +357,16 @@
                         else {
                             $pers_obj->vorname = $forename;
                             $pers_obj->familienname = $match['family'] . ', al-';
-                            if(isset(Personengruppe::$db_groups[$pers_obj->familienname]))
-                                $pers_obj->personengruppe = Personengruppe::$db_groups[$pers_obj->familienname];
+
+                            if($pers_obj->sex == 'm' && $match['family'] == 'ʿAbrīya')
+                                $pers_obj->sex = 'f'; // some Abriya have no "bint" in the name
+
+                            $lookup_family_name = $pers_obj->familienname;
+                            if(in_array($match['family'], array('ʿAbrīyin', 'ʿAbriyīn', 'ʿAbrīyīn', 'ʿAbrīyān', 'ʿAbrīyūn', 'ʿAbrīya', 'ʿAbrīyāt')))
+                                $lookup_family_name = 'ʿAbrī, al-';
+
+                            if(isset(Personengruppe::$db_groups[$lookup_family_name]))
+                                $pers_obj->personengruppe = Personengruppe::$db_groups[$lookup_family_name];
                             Person::$alle[$name_plain] = $pers_obj;
                         }
                     }
