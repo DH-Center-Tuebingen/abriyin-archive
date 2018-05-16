@@ -222,6 +222,7 @@
                 $personengruppe = null,
                 $vollname = null,
                 $originaltext = null,
+                $edit_status = null,
                 $notizen = array();
 
         // ----------------------------------------------------------------------------------------------------
@@ -332,6 +333,7 @@
                 }
                 else {
                     $pers_obj = new Person;
+                    $pers_obj->edit_status = 'imported';
                     $pers_obj->originaltext = $orig_text;
                     $pers_obj->notizen[] = sprintf('Originaltext: "%s" [P_ORIG_TEXT]', $orig_text);
 
@@ -455,6 +457,7 @@
 
         public  $db_id = false,
                 $aufnahme = null,
+                $edit_status = null,
                 $notizen = array();
                 //$weitere_aufnahmen = array();
 
@@ -470,6 +473,7 @@
             }
 
             $d = new Dokument;
+            $d->edit_status = 'imported';
             $d->aufnahme = $a;
             $z = $a->tabellenzeile;
             $d->notizen[] = sprintf(
