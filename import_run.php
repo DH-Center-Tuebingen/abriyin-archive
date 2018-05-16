@@ -315,6 +315,9 @@
                 ))) {
                     $p = 'Muḥsin b. Zahrān b. Muḥammad b. Ibrāhīm al-ʿAbrī';
                 }
+                else if(starts_with($p, 'Šāmis b. ʿAbdallāh')) {
+                    $p = 'Šāmis b. ʿAbdallāh b. Ḫalfān aḏ-Ḏuhlī';
+                }
 
                 $pers_obj = null;
                 if($p != '' && isset(Person::$arr_orig_names[$p])) {
