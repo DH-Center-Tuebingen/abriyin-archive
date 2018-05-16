@@ -315,7 +315,7 @@
                 ))) {
                     $p = 'Muḥsin b. Zahrān b. Muḥammad b. Ibrāhīm al-ʿAbrī';
                 }
-                else if(starts_with($p, 'Šāmis b. ʿAbdallāh')) {
+                else if(starts_with('Šāmis b. ʿAbdallāh', $p)) {
                     $p = 'Šāmis b. ʿAbdallāh b. Ḫalfān aḏ-Ḏuhlī';
                 }
 
