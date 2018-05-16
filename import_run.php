@@ -648,7 +648,7 @@ TABLE;
                 <th>#</th>
                 <th>Familienname</th>
                 <th>Vorname</th>
-                <th>Beiname</th>
+                <th>m/f</th>
                 <th>Personengruppe</th>
                 <th>Originaltext</th>
             </tr>
@@ -660,7 +660,7 @@ TABLE;
                 $c_group_found++;
             $personen .= sprintf(
                 "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-                ++$c_pers_neu, $p->familienname, $p->vorname, $p->beiname, $p->personengruppe ? $p->personengruppe->group_name : '', $p->originaltext
+                ++$c_pers_neu, $p->familienname, $p->vorname, $p->sex, $p->personengruppe ? $p->personengruppe->group_name : '', $p->originaltext
             );
         }
         $personen .= '</table>';
