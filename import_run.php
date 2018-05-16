@@ -358,7 +358,7 @@
                             $pers_obj->vorname = $forename;
                             $lookup_family_name = $pers_obj->familienname = $match['family'] . ', al-';
 
-                            if($pers_obj->sex == 'm' && in_array($match['family'], array('ʿAbrīya', 'ʿAbrīyān', 'ʿAbrīyāt'))) {
+                            if(in_array($match['family'], array('ʿAbrīya', 'ʿAbrīyān', 'ʿAbrīyāt'))) {
                                 $pers_obj->sex = 'f'; // some Abriya have no "bint" in the name
                                 $lookup_family_name = 'ʿAbrī, al-';
                             }
