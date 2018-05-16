@@ -11,7 +11,9 @@
                 $adressat = null,
                 $absender = null,
                 $weitere = null,
-                $inhalt = null;
+                $inhalt = null,
+                $relevant = false,
+                $notizen = array();
 
         // ----------------------------------------------------------------------------------------------------
         public static function einlesen($row) {
@@ -20,7 +22,7 @@
                 foreach(array('nr', 'dif', 'jahr', 'adressat', 'absender', 'weitere', 'inhalt') as $prop) {
                     $z->{$prop} = trim($row[$prop]);
                 }
-                $z->nr = preg_replace('/\s+/', ' ', $z->nr);
+                $z->nr = preg_replace('/\s/', '', $z->nr);
                 $z->dif = preg_replace('/\s+/', ' ', $z->dif);
                 $z->datum = $row['plain_datum'];
                 Tabellenzeile::$alle[$z->nr] = $z;
@@ -47,6 +49,7 @@
                 $nr_kehrseite = null,
                 $tabellenzeile = null,
                 $dok_typ = null,
+                $dokument = null, // zeiger auf zugeordnetes Dokument
                 $art = null; // verweis auf vor/rückseite
 
         // ----------------------------------------------------------------------------------------------------
@@ -54,11 +57,16 @@
         // ----------------------------------------------------------------------------------------------------
             $a = new Aufnahme;
             $a->tabellenzeile = $z;
-            if(!$a->ermittle_signatur())
+            if(!$a->ermittle_signatur()) {
+                $z->notizen[] = "Kann Signatur nicht ermitteln [Z_NO_SIG]";
+                $z->relevant = false;
                 return false;
+            }
 
             if(isset(Dokument::$alle[$a->signatur])) {
                 Aufnahme::$anz_bereits_existierende++;
+                $z->notizen[] = "Existiert bereits in der Datenbank [Z_IN_DB]";
+                $z->relevant = false;
                 return false; // existiert bereits in der DB
             }
 
@@ -77,13 +85,16 @@
                 "A; r04-28; 2 Z"
                 sonstige?
             */
-            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?[a-z]?)($|[; \/,])/i', $z->dif, $match);
-            $a->nr_kehrseite = $a->ist_rueckseite ? $match['frontside'] : null;
+            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
+            $a->nr_kehrseite = $a->ist_rueckseite ? preg_replace('/\s/', '', $match['frontside']) : null;
 
-            $relevant = !(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif));
-            if(!$relevant)
+            if(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif)) {
+                $z->relevant = false;
+                $z->notizen[] = "Wiederholung [Z_WDH]";
                 return false;
+            }
 
+            $z->relevant = true;
             Aufnahme::$alle[$z->nr] = $a;
 
             // Datum einlesen
@@ -209,6 +220,35 @@
             foreach(array('adressat', 'absender', 'weitere') as $person_feld) {
                 $this->{$person_feld} = Person::erzeuge($this->tabellenzeile->{$person_feld}, $this);
             }
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public function zu_dokument_zuordnen() {
+        // ----------------------------------------------------------------------------------------------------
+            if(!$this->ist_rueckseite)
+                return;
+
+            if(isset(Aufnahme::$alle[$this->nr_kehrseite])) {
+                $vorderseite = Aufnahme::$alle[$this->nr_kehrseite];
+                $vorderseite->dokument->weitere_aufnahmen[] = $this;
+                $this->dokument = $vorderseite->dokument;
+            }
+            else {
+                $this->tabellenzeile->relevant = false;
+
+                if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
+                    $this->tabellenzeile->notizen[] = "Rückseite; Vorderseite bereits irrelevant [Z_FRONT_IRRELEVANT]";
+                else
+                    $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
+            }
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function rueckseiten_zuordnen() {
+        // ----------------------------------------------------------------------------------------------------
+            foreach(Aufnahme::$alle as $nr => $a)
+                if($a->ist_rueckseite)
+                    $a->zu_dokument_zuordnen();
         }
     }
 
@@ -466,9 +506,9 @@
 
         public  $db_id = false,
                 $aufnahme = null,
+                $weitere_aufnahmen = array(),
                 $edit_status = null,
                 $notizen = array();
-                //$weitere_aufnahmen = array();
 
         // ----------------------------------------------------------------------------------------------------
         public static function aus_aufnahme($a) {
@@ -484,6 +524,7 @@
             $d = new Dokument;
             $d->edit_status = 'imported';
             $d->aufnahme = $a;
+            $d->aufnahme->dokument = $d;
             $z = $a->tabellenzeile;
             $d->notizen[] = sprintf(
                 "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
@@ -533,6 +574,8 @@
 
         foreach(Aufnahme::$alle as $z_nr => $a)
             Dokument::aus_aufnahme($a);
+
+        Aufnahme::rueckseiten_zuordnen();
 
         result_preview();
     }
@@ -592,11 +635,29 @@ X;
             return strcmp($a->aufnahme->signatur, $b->aufnahme->signatur);
         });
 
-        $aufnahmen = '';
-        /*$c = 0;
-        foreach(Aufnahme::$alle as $foo => $a) {
-            $aufnahmen .= sprintf("<h4># %s</h4>\n<pre>%s</pre><hr />\n", ++$c, var_export($a, true));
-        }*/
+        $aufnahmen = <<<TABLE
+            <p class='loading'>Tabelle lädt ...</p>
+            <table class="table table-striped table-bordered table-responsive table-condensed">
+            <tr>
+                <th>Grund</th>
+                <th>Nr</th>
+                <th>Dif</th>
+                <th>Jahr</th>
+                <th>Datum</th>
+                <th>Adressaten</th>
+                <th>Absender</th>
+                <th>Weitere</th>
+            </tr>
+TABLE;
+        foreach(Tabellenzeile::$alle as $z) {
+            if($z->relevant)
+                continue;
+            $aufnahmen .= sprintf(
+                "<tr><td><i>%s</i></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+                join('; ', $z->notizen), $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
+            );
+        }
+        $aufnahmen .= "</table>\n";
 
         $c_doks_neu = 0;
         $dokumente = <<<TABLE
@@ -618,13 +679,14 @@ X;
                 <th>Adressaten</th>
                 <th>Absender</th>
                 <th>Weitere</th>
-                <th>Orig. Nr</th>
-                <th>Orig. Dif</th>
-                <th>Orig. Jahr</th>
-                <th>Orig. Datum</th>
-                <th>Orig. Adressaten</th>
-                <th>Orig. Absender</th>
-                <th>Orig. Weitere</th>
+                <th>Rückseite(n)</th>
+                <th>Aufnahme: Nr</th>
+                <th>Aufnahme: Dif</th>
+                <th>Aufnahme: Jahr</th>
+                <th>Aufnahme: Datum</th>
+                <th>Aufnahme: Adressaten</th>
+                <th>Aufnahme: Absender</th>
+                <th>Aufnahme: Weitere</th>
             </tr>
 TABLE;
         foreach(Dokument::$alle as $foo => $d) {
@@ -652,8 +714,12 @@ TABLE;
                 }
                 ${$pers_typ} .= '</ul>';
             }
+            $weitere_aufn = '';
+            foreach($d->weitere_aufnahmen as $a)
+                $weitere_aufn .= ($weitere_aufn == '' ? '' : '; ') . $a->tabellenzeile->nr;
+
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->aufnahme->signatur, $d->aufnahme->buendel, $d->aufnahme->datum_jahr, $d->aufnahme->datum_monat, $d->aufnahme->datum_tag, $adressat, $absender, $weitere, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->aufnahme->signatur, $d->aufnahme->buendel, $d->aufnahme->datum_jahr, $d->aufnahme->datum_monat, $d->aufnahme->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
             );
         }
         $dokumente .= '</table>';
@@ -695,7 +761,7 @@ TABLE;
             <ul class="nav nav-tabs">
                 <li class="active"><a data-toggle="tab" href="#dokumente">Neue Dokumente</a></li>
                 <li><a data-toggle="tab" href="#personen">Neue Personen</a></li>
-                <!--<li><a data-toggle="tab" href="#aufnahmen">Aufnahmen</a></li>-->
+                <li><a data-toggle="tab" href="#aufnahmen">Ignorierte Aufnahmen</a></li>
             </ul>
             <div class="tab-content">
                 <div id="dokumente" class="tab-pane active">
@@ -706,10 +772,10 @@ TABLE;
                     <h3>Neue Personen</h3>
                     $personen
                 </div>
-                <!--<div id="aufnahmen" class="tab-pane ">
-                    <h3>Aufnahmen</h3>
+                <div id="aufnahmen" class="tab-pane">
+                    <h3>Ignorierte Aufnahmen</h3>
                     $aufnahmen
-                </div>-->
+                </div>
             </div>
             <script>
                 $(document).ready(function() {
