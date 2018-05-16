@@ -46,7 +46,8 @@
                 $ist_rueckseite = null,
                 $nr_kehrseite = null,
                 $tabellenzeile = null,
-                $typ = null; // verweis auf vor/rückseite
+                $dok_typ = null,
+                $art = null; // verweis auf vor/rückseite
 
         // ----------------------------------------------------------------------------------------------------
         public static function aus_zeile($z) {
@@ -61,9 +62,11 @@
                 return false; // existiert bereits in der DB
             }
 
-            $a->typ = '';
-            if(preg_match('/^(?<typ>A|B|MS)/', $z->dif, $match))
-                $a->typ = $match['typ'];
+            $a->art = '';
+            if(preg_match('/^(?<art>A|B|MS)/', $z->dif, $match))
+                $a->art = $match['art'];
+
+            $a->dok_typ = ($a->art == 'MS' ? 'other' : 'letter');
 
             $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d\:\s?\d+)\b/', $z->dif, $match);
             $a->nr_kehrseite = $a->ist_rueckseite ? $match['frontside'] : null;
