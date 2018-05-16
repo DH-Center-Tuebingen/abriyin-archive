@@ -358,12 +358,12 @@
                             $pers_obj->vorname = $forename;
                             $lookup_family_name = $pers_obj->familienname = $match['family'] . ', al-';
 
-                            if(in_array($match['family'], array('ʿAbrīya', 'ʿAbrīyān', 'ʿAbrīyāt'))) {
+                            if(in_array($match['family'], array('ʿAbrīya', 'ʿAbrīyāt'))) {
                                 $pers_obj->sex = 'f'; // some Abriya have no "bint" in the name
                                 $lookup_family_name = 'ʿAbrī, al-';
                             }
 
-                            if(in_array($match['family'], array('ʿAbrīyin', 'ʿAbriyīn', 'ʿAbrīyīn', 'ʿAbrīyūn')))
+                            if(in_array($match['family'], array('ʿAbrīyin', 'ʿAbriyīn', 'ʿAbrīyīn', 'ʿAbrīyūn', 'ʿAbrīyān')))
                                 $lookup_family_name = $pers_obj->familienname = 'ʿAbrī, al-';
 
                             if(isset(Personengruppe::$db_groups[$lookup_family_name]))
