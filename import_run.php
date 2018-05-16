@@ -293,6 +293,12 @@
                 array('Qays', 'Sayf', 'Fayṣal', 'Sulaymān', 'Samḥ', 'Samḥ', 'Šayḫa'),
                 $pers);
 
+
+            // handle cases like "1) Nāṣir b. Masʿūd b. Nāṣir al-ʿAbrī 2) Sulaimān b. Zahrān 3) Muḥsin b. Zahrān"
+            $pers = preg_replace('/^1\)/', '', $pers); // remove "1)" at beginning
+            $pers = preg_replace('/\s\d\)\s/', ' / ', $pers); // replace other numbers with separators
+
+            // truncate consecutive white spaces to single white space
             $pers = trim(preg_replace('/\s+/', ' ', $pers));
 
             if(in_array(mb_strtolower(preg_replace('/\s/', '', $pers)), array('o.a.', 'oa')))
