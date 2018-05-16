@@ -68,7 +68,16 @@
 
             $a->dok_typ = ($a->art == 'MS' ? 'other' : 'letter');
 
-            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d\:\s?\d+)\b/', $z->dif, $match);
+            /* backside formats
+                "A; rD7-10: 08; 2 Z"
+                "MS; rD10-16: 25 A; 13 Z (Gedicht)"
+                "B; rD10-16: 35A; 5 Z abgeschn."
+                "B; r D63-115: 15"
+                "A; r04-28; 2 Z"
+                "A; r04-28; 2 Z"
+                sonstige?
+            */
+            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?[a-z]?)($|[; \/,])/i', $z->dif, $match);
             $a->nr_kehrseite = $a->ist_rueckseite ? $match['frontside'] : null;
 
             $relevant = !(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif));
@@ -469,7 +478,7 @@
                 return;
 
             if($a->ist_rueckseite) {
-                return; // TODO: was wenn info auf der Rückseite ist?
+                return; // folgender Durchlauf mit Zuordnung
             }
 
             $d = new Dokument;
