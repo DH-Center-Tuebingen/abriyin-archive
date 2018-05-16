@@ -26,7 +26,7 @@
 	$CUSTOM_VARIABLES['history'] = array(
 		'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'reset' => false /* not sure */, 'help' => 'This is an informal field that you can use to leave personal editoral comments and notes (e.g. what you are unclear about)'),
 		'edit_status' => array('label' => 'Editing Status', 'type' => T_ENUM, 'required' => true, 'default' => 'editing', 'help' => 'While you are editing the document set the status to <b>Editing</b>. When you are done editing and feel the record is ready for review, set to <b>Editing finished</b>. If you are unclear about any field or information set the status to <b>Unclear</b> and put an explanatory comment or note in the <i>Editing note</i> field. The status <b>Approved</b> should only be set by the seminar leaders.',
-			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved')),
+			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved', 'imported' => 'Imported')),
 		'edit_user' => array('label' => 'Last Editor', 'type' => T_LOOKUP, 'editable' => false, 'default' => REPLACE_DYNAMIC_SESSION_USER, 'lookup' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'users', 'field' => 'id', 'display' => 'name'))
 	);
 
