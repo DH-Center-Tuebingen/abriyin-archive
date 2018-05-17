@@ -16,7 +16,8 @@
     // ========================================================================================================
         public static $alle = array();
 
-        public  $nr = null,
+        public  $zeile = null,
+                $nr = null,
                 $dif = null,
                 $jahr = null,
                 $datum = null,
@@ -30,7 +31,7 @@
         public static function einlesen($row) {
         // ----------------------------------------------------------------------------------------------------
                 $z = new Tabellenzeile;
-                foreach(array('nr', 'dif', 'jahr', 'adressat', 'absender', 'weitere', 'inhalt') as $prop) {
+                foreach(array('zeile', 'nr', 'dif', 'jahr', 'adressat', 'absender', 'weitere', 'inhalt') as $prop) {
                     $z->{$prop} = trim($row[$prop]);
                 }
                 $z->nr = preg_replace('/\s/', '', $z->nr);
@@ -242,7 +243,7 @@
                 $aufnahme_vorderseite = Aufnahme::$alle[$this->nr_kehrseite];
                 if($aufnahme_vorderseite->tabellenzeile->relevant
                     && $aufnahme_vorderseite->dokument !== null
-                    && $aufnahme_vorderseite->dokument->db_id !== null)
+                    && $aufnahme_vorderseite->dokument->db_id === false)
                 {
                     $aufnahme_vorderseite->dokument->weitere_aufnahmen[] = $this;
                     $this->dokument = $aufnahme_vorderseite->dokument;
@@ -253,7 +254,7 @@
 
             $this->tabellenzeile->relevant = false;
             if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
-                $this->tabellenzeile->notizen[] = "Rückseite; Vorderseite bereits irrelevant [Z_FRONT_IRRELEVANT]";
+                $this->tabellenzeile->notizen[] = sprintf("Rückseite; Vorderseite %s (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]", Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
             else
                 $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
         }
@@ -302,7 +303,7 @@
         // ----------------------------------------------------------------------------------------------------
         public function ist_gleich($p) {
         // ----------------------------------------------------------------------------------------------------
-            if($this->db_id !== null && $this->db_id == $p->db_id)
+            if($this->db_id !== false && $this->db_id == $p->db_id)
                 return true;
 
             if($this->vollname == $p->vollname)
@@ -410,7 +411,8 @@
                     $pers_obj = new Person;
                     $pers_obj->edit_status = 'imported';
                     $pers_obj->originaltext = $orig_text;
-                    $pers_obj->notizen[] = sprintf('Originaltext in Aufnahme "%s": "%s" [P_ORIG_TEXT]', $aufnahme->tabellenzeile->nr, $orig_text);
+                    $pers_obj->notizen[] = sprintf('Aus Aufnahme "%s" (Excel-Zeile %s) [P_AUFN]', $aufnahme->tabellenzeile->nr, $aufnahme->tabellenzeile->zeile);
+                    $pers_obj->notizen[] = sprintf('Originaltext: "%s" [P_ORIG_TEXT]', $orig_text);
 
                     $pers_obj->sex = (mb_strpos($orig_text, 'bint') === false ? 'm' : 'f');
 
@@ -728,11 +730,16 @@ X;
                 return -1;
             return strcmp($a->signatur, $b->signatur);
         });
+        uasort(Tabellenzeile::$alle, function($a, $b) {
+            return strcmp($a->nr, $b->nr);
+        });
 
         $aufnahmen = <<<TABLE
             <p class='loading'>Tabelle lädt ...</p>
             <table class="table table-striped table-bordered table-responsive table-condensed">
             <tr>
+                <th>#</th>
+                <th>Excel-Zeile</th>
                 <th>Grund</th>
                 <th>Nr</th>
                 <th>Dif</th>
@@ -743,12 +750,13 @@ X;
                 <th>Weitere</th>
             </tr>
 TABLE;
+        $c = 0;
         foreach(Tabellenzeile::$alle as $z) {
             if($z->relevant)
                 continue;
             $aufnahmen .= sprintf(
-                "<tr><td><i>%s</i></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-                join('; ', $z->notizen), $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
+                "<tr><td>%s</td><td>%s</td><td><i>%s</i></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+                ++$c, $z->zeile, join('; ', $z->notizen), $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
             );
         }
         $aufnahmen .= "</table>\n";
@@ -775,6 +783,7 @@ TABLE;
                 <th>Weitere</th>
                 <th>Rückseite(n)</th>
                 <th>Aufnahme: Nr</th>
+                <th>Aufnahme: Excel-Zeile</th>
                 <th>Aufnahme: Dif</th>
                 <th>Aufnahme: Jahr</th>
                 <th>Aufnahme: Datum</th>
@@ -814,7 +823,7 @@ TABLE;
                 $weitere_aufn .= ($weitere_aufn == '' ? '' : '; ') . $a->tabellenzeile->nr;
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere, $d->importnotizen_erzeugen()
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->zeile, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere, $d->importnotizen_erzeugen()
             );
         }
         $dokumente .= '</table>';
