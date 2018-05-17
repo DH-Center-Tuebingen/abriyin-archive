@@ -1,6 +1,18 @@
 <?
     // ========================================================================================================
-    class Tabellenzeile {
+    class HatNotizen {
+    // ========================================================================================================
+        public $notizen = array();
+
+        // ----------------------------------------------------------------------------------------------------
+        public function importnotizen_erzeugen() {
+        // ----------------------------------------------------------------------------------------------------
+            return join("\n\n", $this->notizen);
+        }
+    }
+
+    // ========================================================================================================
+    class Tabellenzeile extends HatNotizen {
     // ========================================================================================================
         public static $alle = array();
 
@@ -12,8 +24,7 @@
                 $absender = null,
                 $weitere = null,
                 $inhalt = null,
-                $relevant = false,
-                $notizen = array();
+                $relevant = false;
 
         // ----------------------------------------------------------------------------------------------------
         public static function einlesen($row) {
@@ -30,7 +41,7 @@
     }
 
     // ========================================================================================================
-    class Aufnahme { // verarbeitete Tabellenzeile
+    class Aufnahme extends HatNotizen { // verarbeitete Tabellenzeile
     // ========================================================================================================
         public static $alle = array();
 
@@ -44,7 +55,6 @@
                 $adressat = array(),
                 $absender = array(),
                 $weitere = array(),
-                $notizen = array(),
                 $ist_rueckseite = null,
                 $nr_kehrseite = null,
                 $tabellenzeile = null,
@@ -253,7 +263,7 @@
     }
 
     // ========================================================================================================
-    class Person {
+    class Person extends HatNotizen {
     // ========================================================================================================
         public static $alle = array();
         public static $arr_orig_names = array();
@@ -271,8 +281,7 @@
                 $personengruppe = null,
                 $vollname = null,
                 $originaltext = null,
-                $edit_status = null,
-                $notizen = array();
+                $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
         public function make_vollname() {
@@ -500,7 +509,7 @@
     }
 
     // ========================================================================================================
-    class Dokument {
+    class Dokument extends HatNotizen {
     // ========================================================================================================
         public static $alle = array();
 
@@ -517,8 +526,7 @@
                 $aufnahme = null,
                 $inhalt = null,
                 $weitere_aufnahmen = array(),
-                $edit_status = null,
-                $notizen = array();
+                $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
         public static function aus_aufnahme($a) {
