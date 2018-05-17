@@ -546,6 +546,21 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
+        public function importnotizen_erzeugen() {
+        // ----------------------------------------------------------------------------------------------------
+            $n = parent::importnotizen_erzeugen();
+
+            if(count($this->aufnahme->notizen) > 0)
+                $n .= "\n\n" . $this->aufnahme->importnotizen_erzeugen();
+
+            foreach($this->weitere_aufnahmen as $a)
+                if(count($a->notizen) > 0)
+                    $n .= "\n\n" . $a->importnotizen_erzeugen();
+
+            return $n;
+        }
+
+        // ----------------------------------------------------------------------------------------------------
         public static function aus_aufnahme($a) {
         // ----------------------------------------------------------------------------------------------------
             // already in document list
@@ -568,7 +583,7 @@
 
             $z = $a->tabellenzeile;
             $d->notizen[] = sprintf(
-                "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
+                "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\nDATUM: %s\nADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
                 $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
             );
             Dokument::$alle[$a->signatur] = $d;
@@ -603,7 +618,7 @@
             // Notiz für Quellzeile aus der Tabelle
             $z = $aufnahme->tabellenzeile;
             $this->notizen[] = sprintf(
-                "ORIGINALZEILE RÜCKSEITE:\nNR: %s\nDIF: %s\nJAHR: %s\DATUM: %s\ADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
+                "ORIGINALZEILE RÜCKSEITE:\nNR: %s\nDIF: %s\nJAHR: %s\nDATUM: %s\nADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
                 $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
             );
         }
@@ -688,6 +703,9 @@
                     font-weight: bold;
                     font-size: larger;
                 }
+                td > pre {
+                    max-width: 500px;
+                }
             </style>
 X;
         $c_zeilen = count(Tabellenzeile::$alle);
@@ -762,6 +780,7 @@ TABLE;
                 <th>Aufnahme: Adressaten</th>
                 <th>Aufnahme: Absender</th>
                 <th>Aufnahme: Weitere</th>
+                <th>Importnotiz</th>
             </tr>
 TABLE;
         foreach(Dokument::$alle as $foo => $d) {
@@ -794,7 +813,7 @@ TABLE;
                 $weitere_aufn .= ($weitere_aufn == '' ? '' : '; ') . $a->tabellenzeile->nr;
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere, $d->importnotizen_erzeugen()
             );
         }
         $dokumente .= '</table>';
@@ -811,6 +830,7 @@ TABLE;
                 <th>m/f</th>
                 <th>Personengruppe</th>
                 <th>Originaltext</th>
+                <th>Importnotiz</th>
             </tr>
 TABLE;
         foreach(Person::$alle as $foo => $p) {
@@ -819,8 +839,8 @@ TABLE;
             if($p->personengruppe)
                 $c_group_found++;
             $personen .= sprintf(
-                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n",
-                ++$c_pers_neu, $p->familienname, $p->vorname, $p->sex, $p->personengruppe ? $p->personengruppe->group_name : '', $p->originaltext
+                "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n",
+                ++$c_pers_neu, $p->familienname, $p->vorname, $p->sex, $p->personengruppe ? $p->personengruppe->group_name : '', $p->importnotizen_erzeugen(), $p->originaltext
             );
         }
         $personen .= '</table>';
