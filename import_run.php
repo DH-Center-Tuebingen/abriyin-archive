@@ -705,6 +705,7 @@
                 }
                 td > pre {
                     max-width: 500px;
+                    font-size: smaller;
                 }
             </style>
 X;
