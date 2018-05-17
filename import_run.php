@@ -410,7 +410,7 @@
                     $pers_obj = new Person;
                     $pers_obj->edit_status = 'imported';
                     $pers_obj->originaltext = $orig_text;
-                    $pers_obj->notizen[] = sprintf('Originaltext: "%s" [P_ORIG_TEXT]', $orig_text);
+                    $pers_obj->notizen[] = sprintf('Originaltext in Aufnahme "%s": "%s" [P_ORIG_TEXT]', $aufnahme->tabellenzeile->nr, $orig_text);
 
                     $pers_obj->sex = (mb_strpos($orig_text, 'bint') === false ? 'm' : 'f');
 
@@ -841,7 +841,7 @@ TABLE;
                 $c_group_found++;
             $personen .= sprintf(
                 "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n",
-                ++$c_pers_neu, $p->familienname, $p->vorname, $p->sex, $p->personengruppe ? $p->personengruppe->group_name : '', $p->importnotizen_erzeugen(), $p->originaltext
+                ++$c_pers_neu, $p->familienname, $p->vorname, $p->sex, $p->personengruppe ? $p->personengruppe->group_name : '', $p->originaltext, $p->importnotizen_erzeugen()
             );
         }
         $personen .= '</table>';
