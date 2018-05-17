@@ -239,18 +239,23 @@
                 return;
 
             if(isset(Aufnahme::$alle[$this->nr_kehrseite])) {
-                $vorderseite = Aufnahme::$alle[$this->nr_kehrseite];
-                $vorderseite->dokument->weitere_aufnahmen[] = $this;
-                $this->dokument = $vorderseite->dokument;
-                $this->dokument->rueckseiteninfo_einpflegen($this); // merge names into dokument
+                $aufnahme_vorderseite = Aufnahme::$alle[$this->nr_kehrseite];
+                if($aufnahme_vorderseite->tabellenzeile->relevant
+                    && $aufnahme_vorderseite->dokument !== null
+                    && $aufnahme_vorderseite->dokument->db_id !== null)
+                {
+                    $aufnahme_vorderseite->dokument->weitere_aufnahmen[] = $this;
+                    $this->dokument = $aufnahme_vorderseite->dokument;
+                    $this->dokument->rueckseiteninfo_einpflegen($this); // merge names into dokument
+                    return;
+                }
             }
-            else {
-                $this->tabellenzeile->relevant = false;
-                if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
-                    $this->tabellenzeile->notizen[] = "Rückseite; Vorderseite bereits irrelevant [Z_FRONT_IRRELEVANT]";
-                else
-                    $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
-            }
+
+            $this->tabellenzeile->relevant = false;
+            if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
+                $this->tabellenzeile->notizen[] = "Rückseite; Vorderseite bereits irrelevant [Z_FRONT_IRRELEVANT]";
+            else
+                $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -292,6 +297,18 @@
             $this->vollname .= ', ' . $this->vorname;
             $this->vollname .= ', ' . $this->beiname;
             $this->vollname = trim(preg_replace('/\s+/', ' ', $this->vollname), ' ,');
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public function ist_gleich($p) {
+        // ----------------------------------------------------------------------------------------------------
+            if($this->db_id !== null && $this->db_id == $p->db_id)
+                return true;
+
+            if($this->vollname == $p->vollname)
+                return true;
+
+            return false;
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -531,7 +548,7 @@
         // ----------------------------------------------------------------------------------------------------
         public static function aus_aufnahme($a) {
         // ----------------------------------------------------------------------------------------------------
-            // already in DB?
+            // already in document list
             if(isset(Dokument::$alle[$a->signatur]))
                 return;
 
@@ -569,8 +586,17 @@
 
             // Personeninformationen anhängen
             foreach(array('adressat', 'absender', 'weitere') as $pers_typ) {
-                foreach($aufnahme->{$pers_typ} as $personen) {
+                foreach($aufnahme->{$pers_typ} as $person) {
                     // TODO check if person already exists, otherwise add from rückseite
+                    $existiert = false;
+                    foreach($this->{$pers_typ} as $schon_da) {
+                        if($schon_da->ist_gleich($person)) {
+                            $existiert = true;
+                            break;
+                        }
+                    }
+                    if(!$existiert)
+                        $this->{$pers_typ}[] = $person;
                 }
             }
 
