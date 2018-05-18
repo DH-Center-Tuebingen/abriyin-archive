@@ -632,21 +632,23 @@
             $doks_neu = array();
 
             foreach(Dokument::$alle as $sig => $d) {
-                if($d->aufnahme->art != 'B') { // suche "B" in weiteren Aufnahmen
+                if($d->db_id === false // nur neue Dokumente
+                    && $d->aufnahme->art != 'B')
+                {
+                    // Suche "B" Aufnahme:
                     for($i = 0; $i < count($d->weitere_aufnahmen); $i++) {
                         $a = $d->weitere_aufnahmen[$i];
                         if($a->art == 'B') {
                             $temp = $a;
-                            $d->weitere_aufnahmen[$i] = $d->aufname;
+                            $d->weitere_aufnahmen[$i] = $d->aufnahme;
                             $d->aufnahme = $temp;
+                            $d->sig = $d->aufnahme->signatur;
                             break;
                         }
                     }
                 }
-                $d->signatur = $aufnahme->signatur;
-                $doks_neu[$aufnahme->signatur] = $d;
+                $doks_neu[$sig] = $d;
             }
-
             Dokument::$alle = $doks_neu;
         }
 
