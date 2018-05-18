@@ -97,7 +97,11 @@
                 sonstige?
             */
             $a->ist_rueckseite = preg_match('/\bv\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
-            $a->nr_kehrseite = $a->ist_rueckseite ? preg_replace('/\s/', '', $match['frontside']) : null;
+            if($a->ist_rueckseite)
+                $a->nr_kehrseite = preg_replace('/\s/', '', $match['frontside']);
+            $ist_vorderseite = preg_match('/\br\s?(?<backside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
+            if($ist_vorderseite)
+                $a->nr_kehrseite = preg_replace('/\s/', '', $match['backside']);
 
             if(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif)) {
                 $z->relevant = false;
@@ -260,11 +264,24 @@
         }
 
         // ----------------------------------------------------------------------------------------------------
-        public static function rueckseiten_zuordnen() {
+        public static function rueckseiten_zu_dokument_zuordnen() {
         // ----------------------------------------------------------------------------------------------------
             foreach(Aufnahme::$alle as $nr => $a)
                 if($a->ist_rueckseite)
                     $a->zu_dokument_zuordnen();
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public function haengende_rueckseiten_finden() {
+        // ----------------------------------------------------------------------------------------------------
+            // manche Rückseiten haben keinen Verweis auf die Vorderseite
+            if($this->nr_kehrseite === null)
+                return;
+            $kehrseite = isset(Aufnahme::$alle[$this->nr_kehrseite]) ? Aufnahme::$alle[$this->nr_kehrseite] : null;
+            if($kehrseite) {
+                $kehrseite->nr_kehrseite = $this->tabellenzeile->nr;
+                $kehrseite->ist_rueckseite = !$this->ist_rueckseite;
+            }
         }
     }
 
@@ -693,9 +710,12 @@
             Aufnahme::aus_zeile($z);
 
         foreach(Aufnahme::$alle as $z_nr => $a)
+            $a->haengende_rueckseiten_finden();
+
+        foreach(Aufnahme::$alle as $z_nr => $a)
             Dokument::aus_aufnahme($a);
 
-        Aufnahme::rueckseiten_zuordnen();
+        Aufnahme::rueckseiten_zu_dokument_zuordnen();
         Dokument::signaturen_bestimmen();
 
         result_preview();
