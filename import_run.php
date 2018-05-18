@@ -96,7 +96,7 @@
                 "A; r04-28; 2 Z"
                 sonstige?
             */
-            $a->ist_rueckseite = preg_match('/\br\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
+            $a->ist_rueckseite = preg_match('/\bv\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
             $a->nr_kehrseite = $a->ist_rueckseite ? preg_replace('/\s/', '', $match['frontside']) : null;
 
             if(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif)) {
@@ -624,6 +624,32 @@
                 $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
             );
         }
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function signaturen_bestimmen() {
+        // ----------------------------------------------------------------------------------------------------
+            // immer versuchen, die Signatur der Aufnahme "B" zu entlocken, falls möglich.
+            $doks_neu = array();
+
+            foreach(Dokument::$alle as $sig => $d) {
+                if($d->aufnahme->art != 'B') { // suche "B" in weiteren Aufnahmen
+                    for($i = 0; $i < count($d->weitere_aufnahmen); $i++) {
+                        $a = $d->weitere_aufnahmen[$i];
+                        if($a->art == 'B') {
+                            $temp = $a;
+                            $d->weitere_aufnahmen[$i] = $d->aufname;
+                            $d->aufnahme = $temp;
+                            break;
+                        }
+                    }
+                }
+                $d->signatur = $aufnahme->signatur;
+                $doks_neu[$aufnahme->signatur] = $d;
+            }
+
+            Dokument::$alle = $doks_neu;
+        }
+
     }
 
     // ========================================================================================================
@@ -668,6 +694,7 @@
             Dokument::aus_aufnahme($a);
 
         Aufnahme::rueckseiten_zuordnen();
+        Dokument::signaturen_bestimmen();
 
         result_preview();
     }
