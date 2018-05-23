@@ -39,6 +39,36 @@
                 $z->datum = $row['plain_datum'];
                 Tabellenzeile::$alle[$z->nr] = $z;
         }
+
+        // ----------------------------------------------------------------------------------------------------
+        public function importnotiz_formatieren() {
+        // ----------------------------------------------------------------------------------------------------
+            $t = '';
+            $n = array(
+                'AUFNAHME NR' => $this->nr,
+                'EXCEL-ZEILE' => $this->zeile,
+                'DIF' => $this->dif,
+                'JAHR' => $this->jahr,
+                'DATUM' => $this->datum,
+                'ADRESSAT' => $this->adressat,
+                'ABSENDER' => $this->absender,
+                'WEITERE' => $this->weitere
+            );
+
+            foreach($n as $label => $val) {
+                $val = trim(strval($val));
+                if($val == '')
+                    continue;
+                $t .= sprintf(
+                    "%s%s: %s",
+                    ($t == '' ? '' : "\n"),
+                    $label,
+                    $val
+                );
+            }
+
+            return $t;
+        }
     }
 
     // ========================================================================================================
@@ -600,11 +630,7 @@
             foreach(array('signatur', 'buendel', 'datum_jahr', 'datum_monat', 'datum_tag', 'adressat', 'absender', 'weitere', 'dok_typ') as $prop)
                 $d->{$prop} = $d->aufnahme->{$prop};
 
-            $z = $a->tabellenzeile;
-            $d->notizen[] = sprintf(
-                "ORIGINALZEILE:\nNR: %s\nDIF: %s\nJAHR: %s\nDATUM: %s\nADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
-                $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
-            );
+            $d->notizen[] = $a->tabellenzeile->importnotiz_formatieren();
             Dokument::$alle[$a->signatur] = $d;
         }
 
@@ -615,13 +641,13 @@
             if($aufnahme->tabellenzeile->inhalt) {
                 if($this->inhalt === null)
                     $this->inhalt = '';
-                $this->inhalt .= (!$this->inhalt ? "\n\n" : '') . $aufnahme->tabellenzeile->inhalt;
+                $this->inhalt .= (($this->inhalt != '' ? "\n\n" : '') . $aufnahme->tabellenzeile->inhalt);
             }
 
             // Personeninformationen anhängen
             foreach(array('adressat', 'absender', 'weitere') as $pers_typ) {
                 foreach($aufnahme->{$pers_typ} as $person) {
-                    // TODO check if person already exists, otherwise add from rückseite
+                    // check if person already exists, otherwise add from rückseite
                     $existiert = false;
                     foreach($this->{$pers_typ} as $schon_da) {
                         if($schon_da->ist_gleich($person)) {
@@ -635,11 +661,7 @@
             }
 
             // Notiz für Quellzeile aus der Tabelle
-            $z = $aufnahme->tabellenzeile;
-            $this->notizen[] = sprintf(
-                "ORIGINALZEILE RÜCKSEITE:\nNR: %s\nDIF: %s\nJAHR: %s\nDATUM: %s\nADRESSAT: %s\nABSENDER: %s\nWEITERE: %s",
-                $z->nr, $z->dif, $z->jahr, $z->datum, $z->adressat, $z->absender, $z->weitere
-            );
+            $this->notizen[] = $aufnahme->tabellenzeile->importnotiz_formatieren();
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -754,8 +776,11 @@
                     font-weight: bold;
                     font-size: larger;
                 }
-                td > pre {
-                    max-width: 500px;
+                td.code {
+                    min-width: 200px;
+                    font-family: monospace;
+                }
+                table.font-sm {
                     font-size: smaller;
                 }
             </style>
@@ -820,9 +845,9 @@ TABLE;
                 <span class="dbid">ID in der Datenbank</span>
             </p>
             <p class='loading'>Tabelle lädt ...</p>
-            <table class="table table-striped table-bordered table-responsive table-condensed">
+            <table class="table table-striped table-bordered table-responsive table-condensed font-sm">
             <tr>
-                <th>Sig.</th>
+                <th>Signatur</th>
                 <th>Bündel</th>
                 <th>Jahr</th>
                 <th>Monat</th>
@@ -830,15 +855,7 @@ TABLE;
                 <th>Adressaten</th>
                 <th>Absender</th>
                 <th>Weitere</th>
-                <th>Rückseite(n)</th>
-                <th>Aufnahme: Nr</th>
-                <th>Aufnahme: Excel-Zeile</th>
-                <th>Aufnahme: Dif</th>
-                <th>Aufnahme: Jahr</th>
-                <th>Aufnahme: Datum</th>
-                <th>Aufnahme: Adressaten</th>
-                <th>Aufnahme: Absender</th>
-                <th>Aufnahme: Weitere</th>
+                <th>Inhalt</th>
                 <th>Importnotiz</th>
             </tr>
 TABLE;
@@ -867,12 +884,10 @@ TABLE;
                 }
                 ${$pers_typ} .= '</ul>';
             }
-            $weitere_aufn = '';
-            foreach($d->weitere_aufnahmen as $a)
-                $weitere_aufn .= ($weitere_aufn == '' ? '' : '; ') . $a->tabellenzeile->nr;
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><pre>%s</pre></td></tr>\n", $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, $weitere_aufn, $d->aufnahme->tabellenzeile->nr, $d->aufnahme->tabellenzeile->zeile, $d->aufnahme->tabellenzeile->dif, $d->aufnahme->tabellenzeile->jahr, $d->aufnahme->tabellenzeile->datum, $d->aufnahme->tabellenzeile->adressat, $d->aufnahme->tabellenzeile->absender, $d->aufnahme->tabellenzeile->weitere, $d->importnotizen_erzeugen()
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class='code'>%s</td></tr>\n",
+                $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, html($d->inhalt, 0, false, true), html($d->importnotizen_erzeugen(), 0, false, true)
             );
         }
         $dokumente .= '</table>';
