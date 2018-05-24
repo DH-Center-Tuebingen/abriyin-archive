@@ -163,11 +163,11 @@
             $has_sig_aufnahme = false;
             // match "B02-3: 25" or similar
             if(preg_match('/^(?<sig>[BD]\d+)-(?<bundle>[^:]+):\s*(?<aufnahme>.+)$/', $this->tabellenzeile->nr, $match)) {
-                $this->buendel = $match['bundle'];
+                $this->buendel = intval(preg_replace('[^\d]', '', $match['bundle'])); // Bündel nur zahlen
                 $has_sig_aufnahme = true;
             }
             else if(preg_match('/^(?<sig>[0123A]\d+)-(?<aufnahme>.+)$/', $this->tabellenzeile->nr, $match)) {
-                $this->buendel = '';
+                $this->buendel = null;
                 $has_sig_aufnahme = true;
             }
 
@@ -704,8 +704,8 @@
                 if($doc->db_id !== false)
                     continue;
                 // insert document
-                $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, edit_note, edit_status)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, 'imported')";
+                $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, edit_note, edit_status, physical_location)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, 'imported', 30)";
                 $values = array($doc->signatur, $doc->buendel, $doc->datum_jahr, $doc->datum_monat, $doc->datum_tag,
                     $doc->dok_typ, $doc->inhalt, $doc->importnotizen_erzeugen());
                 $stmt = Datenbank::$db->prepare($sql);
