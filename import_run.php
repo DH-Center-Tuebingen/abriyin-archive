@@ -129,10 +129,10 @@
                 "A; r04-28; 2 Z"
                 sonstige?
             */
-            $a->ist_rueckseite = preg_match('/\bv\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
+            $a->ist_rueckseite = preg_match('/\bv\s?(?<frontside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?-?[a-z]?)($|[; \/,])/i', $z->dif, $match);
             if($a->ist_rueckseite)
                 $a->nr_kehrseite = preg_replace('/\s/', '', $match['frontside']);
-            $ist_vorderseite = preg_match('/\br\s?(?<backside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?[a-z]?)($|[; \/,])/i', $z->dif, $match);
+            $ist_vorderseite = preg_match('/\br\s?(?<backside>[0123ABD]\d+-\d+[a-z]?(\:\s?\d+)?\s?-?[a-z]?)($|[; \/,])/i', $z->dif, $match);
             if($ist_vorderseite)
                 $a->nr_kehrseite = preg_replace('/\s/', '', $match['backside']);
 
@@ -337,16 +337,17 @@
                 // Solch eine Aufnahme wird ein eigenes Dokument
                 $nr = $a->tabellenzeile->nr;
                 $dif = $a->tabellenzeile->dif;
-                if(preg_match('/(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?[a-z]?\/?)+)($|[;, ])/i', $nr, $match_nr)
-                    && preg_match('/\b(v|r)\s?(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?[a-z]?\/?)+)($|[;, ])/i', $dif, $match_dif))
+                if(preg_match('/(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?-?[a-z]?\/?)+)($|[;, ])/i', $nr, $match_nr)
+                    && preg_match('/\b(v|r)\s?(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?-?[a-z]?\/?)+)($|[;, ])/i', $dif, $match_dif))
                 {
                     if(trim($match_nr['teil1']) != trim($match_dif['teil1']))
                         continue;
                     // nun gucken ob sich nach dem Doppelpunkt zahlen überlappen
-                    $arr_aufn_nr = explode('/', $match_nr['teil2']);
+                    // Modifikatoren wegmachen, z.B das "-a" bei: D18-32:26/27-a | B; vD18-32: 27, 3 Z + R
+                    $arr_aufn_nr = explode('/', preg_replace('/[^\/\d]/', '', $match_nr['teil2']));
                     if(!is_array($arr_aufn_nr))
                         continue;
-                    $arr_aufn_dif = explode('/', $match_dif['teil2']);
+                    $arr_aufn_dif = explode('/', preg_replace('/[^\/\d]/', '', $match_dif['teil2']));
                     if(!is_array($arr_aufn_dif))
                         continue;
                     $overlap = array_intersect($arr_aufn_dif, $arr_aufn_nr);
