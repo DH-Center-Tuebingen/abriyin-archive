@@ -399,7 +399,7 @@
                     continue;
                 $sql = "insert into persons (sex, forename_translit, lastname_translit, edit_note, edit_status)
                     values (?, ?, ?, ?, 'imported')";
-                $values = array($person->sex, $person->vorname, $this->familienname, $person->importnotizen_erzeugen());
+                $values = array($person->sex, $person->vorname, $person->familienname, $person->importnotizen_erzeugen());
                 $stmt = Datenbank::$db->prepare($sql);
                 if($stmt === false)
                     return proc_error(l10n('error.db-prepare'), Datenbank::$db);
