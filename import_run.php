@@ -595,6 +595,27 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
+        public function in_db_schreiben() {
+        // ----------------------------------------------------------------------------------------------------
+            global $TABLES;
+
+            // insert document
+            $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, import_notes, edit_status)
+                values (?, ?, ?, ?, ?, ?, ?, ?, 'imported')";
+            $values = array($this->signatur, $this->buendel, $this->datum_jahr, $this->datum_monat, $this->datum_tag,
+                $this->dok_typ, $this->inhalt, $this->importnotizen_erzeugen());
+            $stmt = Datenbank::$db->prepare($sql);
+            if($stmt === false)
+                return proc_error(l10n('error.db-prepare'), Datenbank::$db);
+    		if(false === $stmt->execute($values))
+    			return proc_error(l10n('error.db-execute'), $stmt);
+            $new_id = Datenbank::$db->lastInsertId($TABLES['documents']['primary_key']['sequence_name']);
+
+            // assign people
+            return true;
+        }
+
+        // ----------------------------------------------------------------------------------------------------
         public function importnotizen_erzeugen() {
         // ----------------------------------------------------------------------------------------------------
             $n = parent::importnotizen_erzeugen();
@@ -739,11 +760,11 @@
         Aufnahme::rueckseiten_zu_dokument_zuordnen();
         Dokument::signaturen_bestimmen();
 
-        result_preview();
+        ergebnis_vorschau();
     }
 
     // ========================================================================================================
-    function result_preview() {
+    function ergebnis_vorschau() {
     // ========================================================================================================
         echo <<<X
             <style>
@@ -851,6 +872,7 @@ TABLE;
             <tr>
                 <th>Signatur</th>
                 <th>Bündel</th>
+                <th>Typ</th>
                 <th>Jahr</th>
                 <th>Monat</th>
                 <th>Tag</th>
@@ -888,8 +910,8 @@ TABLE;
             }
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class='sm'>%s</td><td class='code'>%s</td></tr>\n",
-                $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, html($d->inhalt, 0, false, true), html($d->importnotizen_erzeugen(), 0, false, true)
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class='sm'>%s</td><td class='code'>%s</td></tr>\n",
+                $d->signatur, $d->buendel, $d->dok_typ, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, html($d->inhalt, 0, false, true), html($d->importnotizen_erzeugen(), 0, false, true)
             );
         }
         $dokumente .= '</table>';
