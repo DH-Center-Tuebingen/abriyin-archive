@@ -164,7 +164,7 @@
             // match "B02-3: 25" or similar
             if(preg_match('/^(?<sig>[BD]\d+)-(?<bundle>[^:]+):\s*(?<aufnahme>.+)$/', $this->tabellenzeile->nr, $match)) {
                 $this->buendel = preg_replace('/[^\d]/', '', $match['bundle']);
-                $this->buendel = ($this->buendel != '' ? intval($buendel) : null); // Bündel nur Zahlen
+                $this->buendel = ($this->buendel != '' ? intval($this->buendel) : null); // Bündel nur Zahlen
                 $has_sig_aufnahme = true;
             }
             else if(preg_match('/^(?<sig>[0123A]\d+)-(?<aufnahme>.+)$/', $this->tabellenzeile->nr, $match)) {
