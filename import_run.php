@@ -25,7 +25,8 @@
                 $absender = null,
                 $weitere = null,
                 $inhalt = null,
-                $relevant = false;
+                $relevant = false,
+                $fehlerstatus = null;
 
         // ----------------------------------------------------------------------------------------------------
         public static function einlesen($row) {
@@ -100,6 +101,7 @@
             $a->tabellenzeile = $z;
             if(!$a->ermittle_signatur()) {
                 $z->notizen[] = "Kann Signatur nicht ermitteln [Z_NO_SIG]";
+                $z->fehlerstatus = 'Z_NO_SIG';
                 $z->relevant = false;
                 return false;
             }
@@ -107,6 +109,7 @@
             if(isset(Dokument::$alle[$a->signatur])) {
                 Aufnahme::$anz_bereits_existierende++;
                 $z->notizen[] = "Existiert bereits in der Datenbank [Z_IN_DB]";
+                $z->fehlerstatus = 'Z_IN_DB';
                 $z->relevant = false;
                 return false; // existiert bereits in der DB
             }
@@ -136,6 +139,7 @@
             if(starts_with('Wiederholung', $z->dif) || starts_with('Wdh', $z->dif)) {
                 $z->relevant = false;
                 $z->notizen[] = "Wiederholung [Z_WDH]";
+                $z->fehlerstatus = 'Z_WDH';
                 return false;
             }
 
@@ -287,10 +291,14 @@
             }
 
             $this->tabellenzeile->relevant = false;
-            if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant)
+            if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant) {
                 $this->tabellenzeile->notizen[] = sprintf("Rückseite; Vorderseite %s (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]", Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
-            else
+                $this->tabellenzeile->fehlerstatus = 'Z_FRONT_IRRELEVANT';
+            }
+            else {
                 $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
+                $this->tabellenzeile->fehlerstatus = 'Z_NO_FRONT';
+            }
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -311,6 +319,46 @@
             if($kehrseite) {
                 $kehrseite->nr_kehrseite = $this->tabellenzeile->nr;
                 $kehrseite->ist_rueckseite = !$this->ist_rueckseite;
+            }
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function z_no_front_aufloesen() {
+        // ----------------------------------------------------------------------------------------------------
+            foreach(Aufnahme::$alle as $a) {
+                if($a->tabellenzeile->fehlerstatus != 'Z_NO_FRONT')
+                    continue;
+
+                // manche Aufnahmen verweisen auf Aufnahmen, die zusammengefasst sind, z.B.
+                // TODO
+
+                // manche Aufnahmen verweisen auf sich selbst, falls multiple Aufnahmen zusammengefasst sind, z.B.
+                // D16-30: 14/15 | B; vD16-30: 15; 32 Z + R
+                // Solch eine Aufnahme wird ein eigenes Dokument
+                $nr = $a->tabellenzeile->nr;
+                $dif = $a->tabellenzeile->dif;
+                if(preg_match('/(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?[a-z]?\/?)+)($|[;, ])/i', $nr, $match_nr)
+                    && preg_match('/\b(v|r)\s?(?<teil1>[0123ABD]\d+-\d+[a-z]?)\:\s*(?<teil2>(\d+\s?[a-z]?\/?)+)($|[;, ])/i', $dif, $match_dif))
+                {
+                    if(trim($match_nr['teil1']) != trim($match_dif['teil1']))
+                        continue;
+                    // nun gucken ob sich nach dem Doppelpunkt zahlen überlappen
+                    $arr_aufn_nr = explode('/', $match_nr['teil2']);
+                    if(!is_array($arr_aufn_nr))
+                        continue;
+                    $arr_aufn_dif = explode('/', $match_dif['teil2']);
+                    if(!is_array($arr_aufn_dif))
+                        continue;
+                    $overlap = array_intersect($arr_aufn_dif, $arr_aufn_nr);
+                    if(is_array($overlap) && count($overlap) > 0) {
+                        // Fehler resetten
+                        $a->tabellenzeile->fehlerstatus = null;
+                        $a->tabellenzeile->notizen = array();
+                        $a->ist_rueckseite = false;
+                        // Aufnahme aus dieser Gülle machen.
+                        Dokument::aus_aufnahme($a);
+                    }
+                }
             }
         }
     }
@@ -691,6 +739,7 @@
             }
 
             $d = new Dokument;
+            $a->tabellenzeile->relevant = true; // sicherstellen, kann sein dass das verändert wurde
             $d->edit_status = 'imported';
             $d->aufnahme = $a;
             $d->aufnahme->dokument = $d;
@@ -750,6 +799,7 @@
                                 $temp = $a;
                                 $d->weitere_aufnahmen[$i] = $d->aufnahme;
                                 $d->aufnahme = $temp;
+                                $d->aufnahme->tabellenzeile->relevant = true; // sicherstellen dass relevant
                                 break;
                             }
                         }
@@ -807,6 +857,7 @@
             Dokument::aus_aufnahme($a);
 
         Aufnahme::rueckseiten_zu_dokument_zuordnen();
+        Aufnahme::z_no_front_aufloesen();
         Dokument::signaturen_bestimmen();
 
         ergebnis_vorschau();
