@@ -337,6 +337,36 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
+        public static function neue_in_db_schreiben() {
+        // ----------------------------------------------------------------------------------------------------
+            global $TABLES;
+            $persons_pk_seq = $TABLES['persons']['primary_key']['sequence_name'];
+
+            foreach(Person::$alle as $person) {
+                if($person->db_id !== false)
+                    continue;
+                $sql = "insert into persons (sex, forename_translit, lastname_translit, edit_note, edit_status)
+                    values (?, ?, ?, ?, 'imported')";
+                $values = array($person->sex, $person->vorname, $this->familienname, $person->importnotizen_erzeugen());
+                $stmt = Datenbank::$db->prepare($sql);
+                if($stmt === false)
+                    return proc_error(l10n('error.db-prepare'), Datenbank::$db);
+                if(false === $stmt->execute($values))
+                    return proc_error(l10n('error.db-execute'), $stmt);
+                $person->db_id = Datenbank::$db->lastInsertId($persons_pk_seq);
+                // assoc with person group, if any
+                if($person->personengruppe) {
+                    db_prep_exec(
+                        'insert into person_of_group (person, person_group) values (?, ?)',
+                        array($person->db_id, $person->personengruppe->db_id),
+                        $stmt,
+                        Datenbank::$db
+                    );
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------------------------------------------
         public function make_vollname() {
         // ----------------------------------------------------------------------------------------------------
             $this->vollname = '';
@@ -595,24 +625,43 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
-        public function in_db_schreiben() {
+        public static function neue_in_db_schreiben() {
         // ----------------------------------------------------------------------------------------------------
+            Person::neue_in_db_schreiben();
+
             global $TABLES;
-
-            // insert document
-            $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, import_notes, edit_status)
-                values (?, ?, ?, ?, ?, ?, ?, ?, 'imported')";
-            $values = array($this->signatur, $this->buendel, $this->datum_jahr, $this->datum_monat, $this->datum_tag,
-                $this->dok_typ, $this->inhalt, $this->importnotizen_erzeugen());
-            $stmt = Datenbank::$db->prepare($sql);
-            if($stmt === false)
-                return proc_error(l10n('error.db-prepare'), Datenbank::$db);
-    		if(false === $stmt->execute($values))
-    			return proc_error(l10n('error.db-execute'), $stmt);
-            $new_id = Datenbank::$db->lastInsertId($TABLES['documents']['primary_key']['sequence_name']);
-
-            // assign people
-            return true;
+            $documents_pk_seq = $TABLES['documents']['primary_key']['sequence_name'];
+            $person_map = array(
+                'adressat' => 'document_recipients',
+                'absender' => 'document_primary_agents',
+                'weitere' =>  'document_persons'
+            );
+            foreach(Dokument::$alle as $doc) {
+                if($doc->db_id !== false)
+                    continue;
+                // insert document
+                $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, edit_note, edit_status)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, 'imported')";
+                $values = array($doc->signatur, $doc->buendel, $doc->datum_jahr, $doc->datum_monat, $doc->datum_tag,
+                    $doc->dok_typ, $doc->inhalt, $doc->importnotizen_erzeugen());
+                $stmt = Datenbank::$db->prepare($sql);
+                if($stmt === false)
+                    return proc_error(l10n('error.db-prepare'), Datenbank::$db);
+        		if(false === $stmt->execute($values))
+        			return proc_error(l10n('error.db-execute'), $stmt);
+                $doc->db_id = Datenbank::$db->lastInsertId($documents_pk_seq);
+                // assign people
+                foreach($person_map as $pers_typ => $db_table) {
+                    foreach($doc->{$pers_typ} as $person) {
+                        db_prep_exec(
+                            "insert into $db_table (document, person) values (?, ?)",
+                            array($doc->db_id, $person->db_id),
+                            $stmt,
+                            Datenbank::$db
+                        );
+                    }
+                }
+            }
         }
 
         // ----------------------------------------------------------------------------------------------------
