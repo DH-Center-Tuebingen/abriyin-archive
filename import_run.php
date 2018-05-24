@@ -929,7 +929,10 @@ X;
             return strcmp($a->signatur, $b->signatur);
         });
         uasort(Tabellenzeile::$alle, function($a, $b) {
-            return strcmp($a->nr, $b->nr);
+            $c = strcmp($a->fehlerstatus, $b->fehlerstatus);
+            if($c != 0)
+                return $c;
+            return $a->zeile > $b->zeile ? 1 : -1;
         });
 
         $aufnahmen = <<<TABLE
