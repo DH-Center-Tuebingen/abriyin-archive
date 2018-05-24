@@ -718,7 +718,11 @@
                 $c_docs++;
                 // assign people
                 foreach($person_map as $pers_typ => $db_table) {
+                    $assigned_ids = array(); // avoid duplicates
                     foreach($doc->{$pers_typ} as $person) {
+                        if(in_array($person->db_id, $assigned_ids))
+                            continue;
+                        $assigned_ids[] = $person->db_id;
                         if(!db_prep_exec(
                             "insert into $db_table (document, person) values (?, ?)",
                             array($doc->db_id, $person->db_id),
