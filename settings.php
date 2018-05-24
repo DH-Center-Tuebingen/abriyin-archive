@@ -415,7 +415,7 @@
 				//'content' => array('label' => 'Content (XML)', 'type' => T_TEXT_AREA),
 				'summary' => array('label' => 'Summary', 'type' => T_TEXT_AREA),
 				'translation' => array('label' => 'English Translation', 'type' => T_TEXT_AREA),
-				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>unclear / illegible words, unclear vocalization (i.e. personal name)</li><li>“relative dates”, i.e. date deduced from affiliation to a bundle and / or with regards to content (events, people involved).</li><li>possible errors (e.g. unclear reading of dates etc.)</li></ul>'),
+				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>unclear / illegible words, unclear vocalization (i.e. personal name)</li><li>“relative dates”, i.e. date deduced from affiliation to a bundle and / or with regards to content (events, people involved).</li><li>possible errors (e.g. unclear reading of dates etc.)</li><li>If editing status is <code>Imported</code>, this field shows details of the scans used to create this document</li></ul>'),
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			),
