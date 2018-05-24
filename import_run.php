@@ -386,11 +386,14 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
-        public static function neue_in_db_schreiben() {
+        public static function neue_in_db_schreiben(&$result) {
         // ----------------------------------------------------------------------------------------------------
+            if(!is_array($result))
+                $result = array();
             global $TABLES;
             $persons_pk_seq = $TABLES['persons']['primary_key']['sequence_name'];
 
+            $c_pers = $c_pers_group = 0;
             foreach(Person::$alle as $person) {
                 if($person->db_id !== false)
                     continue;
@@ -402,17 +405,25 @@
                     return proc_error(l10n('error.db-prepare'), Datenbank::$db);
                 if(false === $stmt->execute($values))
                     return proc_error(l10n('error.db-execute'), $stmt);
+                $c_pers++;
                 $person->db_id = Datenbank::$db->lastInsertId($persons_pk_seq);
                 // assoc with person group, if any
                 if($person->personengruppe) {
-                    db_prep_exec(
+                    if(!db_prep_exec(
                         'insert into person_of_group (person, person_group) values (?, ?)',
                         array($person->db_id, $person->personengruppe->db_id),
                         $stmt,
                         Datenbank::$db
-                    );
+                    )) return false;
+                    $c_pers_group++;
                 }
             }
+
+            $result += array(
+                'Personen' => $c_pers,
+                'Personen zu Personengruppen zugeordnet' => $c_pers_group
+            );
+            return true;
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -674,9 +685,12 @@
                 $edit_status = null;
 
         // ----------------------------------------------------------------------------------------------------
-        public static function neue_in_db_schreiben() {
+        public static function neue_in_db_schreiben(&$result) {
         // ----------------------------------------------------------------------------------------------------
-            Person::neue_in_db_schreiben();
+            if(!is_array($result))
+                $result = array();
+
+            Person::neue_in_db_schreiben($result);
 
             global $TABLES;
             $documents_pk_seq = $TABLES['documents']['primary_key']['sequence_name'];
@@ -685,6 +699,7 @@
                 'absender' => 'document_primary_agents',
                 'weitere' =>  'document_persons'
             );
+            $c_docs = $c_doc_pers = 0;
             foreach(Dokument::$alle as $doc) {
                 if($doc->db_id !== false)
                     continue;
@@ -699,18 +714,26 @@
         		if(false === $stmt->execute($values))
         			return proc_error(l10n('error.db-execute'), $stmt);
                 $doc->db_id = Datenbank::$db->lastInsertId($documents_pk_seq);
+                $c_docs++;
                 // assign people
                 foreach($person_map as $pers_typ => $db_table) {
                     foreach($doc->{$pers_typ} as $person) {
-                        db_prep_exec(
+                        if(!db_prep_exec(
                             "insert into $db_table (document, person) values (?, ?)",
                             array($doc->db_id, $person->db_id),
                             $stmt,
                             Datenbank::$db
-                        );
+                        )) return false;
+                        $c_doc_pers++;
                     }
                 }
             }
+
+            $result += array(
+                'Dokumente' => $c_docs,
+                'Personen zu Dokumenten zugeordnet' => $c_doc_pers
+            );
+            return true;
         }
 
         // ----------------------------------------------------------------------------------------------------
@@ -839,7 +862,19 @@
     function import_test_run() {
     // ========================================================================================================
         echo '<h2>Import-Testlauf</h2>', PHP_EOL;
+        import_procedure(true);
+    }
 
+    // ========================================================================================================
+    function import_execute() {
+    // ========================================================================================================
+        echo '<h2>Import</h2>', PHP_EOL;
+        import_procedure(false);
+    }
+
+    // ========================================================================================================
+    function import_procedure($test_run) {
+    // ========================================================================================================
         Datenbank::start();
         Datenbank::dokumente_einlesen();
         Person::personen_einlesen();
@@ -861,7 +896,16 @@
         Aufnahme::z_no_front_aufloesen();
         Dokument::signaturen_bestimmen();
 
-        ergebnis_vorschau();
+        if($test_run)
+            ergebnis_vorschau();
+        else {
+            if(!Dokument::neue_in_db_schreiben($result)) {
+                echo "Errors occurred.";
+                return;
+            }
+            foreach($result as $label => $c)
+                echo $label, ': ', $c, '<br />', PHP_EOL;
+        }
     }
 
     // ========================================================================================================

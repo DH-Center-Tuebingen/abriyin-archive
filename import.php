@@ -37,6 +37,7 @@
                 <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
                 <button data-proc="test_documents" type="button" class="form-control btn btn-default">Dokumente analysieren</button>
                 <button data-proc="test_run" type="button" class="form-control btn btn-default">Import-Testlauf</button>
+                <button data-proc="execute" type="button" class="form-control btn btn-default">Import!</button>
             </form>
             <hr />
             <script>
