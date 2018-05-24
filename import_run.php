@@ -671,26 +671,25 @@
             $doks_neu = array();
 
             foreach(Dokument::$alle as $sig => $d) {
-                if($d->db_id === false // nur neue Dokumente
-                    && $d->aufnahme->art != 'B')
-                {
-                    // Suche "B" Aufnahme:
-                    for($i = 0; $i < count($d->weitere_aufnahmen); $i++) {
-                        $a = $d->weitere_aufnahmen[$i];
-                        if($a->art == 'B') {
-                            $temp = $a;
-                            $d->weitere_aufnahmen[$i] = $d->aufnahme;
-                            $d->aufnahme = $temp;
-                            $d->sig = $d->aufnahme->signatur;
-                            break;
+                if($d->db_id === false) { // nur neue Dokumente
+                    if($d->aufnahme->art != 'B') {
+                        // Suche "B" Aufnahme:
+                        for($i = 0; $i < count($d->weitere_aufnahmen); $i++) {
+                            $a = $d->weitere_aufnahmen[$i];
+                            if($a->art == 'B') { // diese vertauschen mit der bisher signaturgebenden aufnahme
+                                $temp = $a;
+                                $d->weitere_aufnahmen[$i] = $d->aufnahme;
+                                $d->aufnahme = $temp;
+                                break;
+                            }
                         }
                     }
+                    $sig = $d->signatur = $d->aufnahme->signatur;
                 }
                 $doks_neu[$sig] = $d;
             }
             Dokument::$alle = $doks_neu;
         }
-
     }
 
     // ========================================================================================================
@@ -780,6 +779,9 @@
                     min-width: 200px;
                     font-family: monospace;
                 }
+                td.sm {
+                    max-width: 220px;
+                }
                 table.font-sm {
                     font-size: smaller;
                 }
@@ -859,7 +861,7 @@ TABLE;
                 <th>Importnotiz</th>
             </tr>
 TABLE;
-        foreach(Dokument::$alle as $foo => $d) {
+        foreach(Dokument::$alle as $d) {
             if($d->db_id !== false)
                 continue;
             ++$c_doks_neu;
@@ -886,7 +888,7 @@ TABLE;
             }
 
             $dokumente .= sprintf(
-                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class='code'>%s</td></tr>\n",
+                "<tr><td class='nw'>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class='sm'>%s</td><td class='code'>%s</td></tr>\n",
                 $d->signatur, $d->buendel, $d->datum_jahr, $d->datum_monat, $d->datum_tag, $adressat, $absender, $weitere, html($d->inhalt, 0, false, true), html($d->importnotizen_erzeugen(), 0, false, true)
             );
         }
