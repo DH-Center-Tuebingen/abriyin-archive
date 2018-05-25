@@ -299,11 +299,11 @@
 
             $this->tabellenzeile->relevant = false;
             if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant) {
-                $this->tabellenzeile->notizen[] = sprintf("Rückseite; Vorderseite %s (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]", Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
-                $this->tabellenzeile->fehlerstatus = 'Z_FRONT_IRRELEVANT';
+                $this->tabellenzeile->notizen[] = sprintf('Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]', Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
+                $this->tabellenzeile->fehlerstatus = 'Z_ASSOC_IRRELEVANT';
             }
             else {
-                $this->tabellenzeile->notizen[] = "Rückseite; keine Vorderseite gefunden [Z_NO_FRONT]";
+                $this->tabellenzeile->notizen[] = sprintf('Aufnahme aus Verweis "%s" nicht gefunden [Z_NO_FRONT]', $this->nr_kehrseite);
                 $this->tabellenzeile->fehlerstatus = 'Z_NO_FRONT';
             }
         }
@@ -763,6 +763,37 @@
         }
 
         // ----------------------------------------------------------------------------------------------------
+        public static function nochmal_irrelevante_checken() {
+        // ----------------------------------------------------------------------------------------------------
+            $alle_neu = array();
+            foreach(Dokument::$alle as $sig => $d) {
+                if($d->db_id) {
+                    $alle_neu[$sig] = $d;
+                    continue;
+                }
+                $alle_aufnahmen = array_merge(array($d->aufnahme), $d->weitere_aufnahmen);
+                $rel = true;
+                foreach($alle_aufnahmen as $a) {
+                    if($a->nr_kehrseite && isset(Tabellenzeile::$alle[$a->nr_kehrseite]) && !Tabellenzeile::$alle[$a->nr_kehrseite]->relevant) {
+                        $rel = false;
+                        foreach($alle_aufnahmen as $a) {
+                            $a->relevant = false;
+                            $a->tabellenzeile->notizen[] = sprintf(
+                                'Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]',
+                                $a->nr_kehrseite, Tabellenzeile::$alle[$a->nr_kehrseite]->zeile
+                            );
+                            $a->tabellenzeile->fehlerstatus = 'Z_ASSOC_IRRELEVANT';
+                        }
+                        break;
+                    }
+                }
+                if($rel)
+                    $alle_neu[$sig] = $d;
+            }
+            Dokument::$alle = $alle_neu;
+        }
+
+        // ----------------------------------------------------------------------------------------------------
         public function importnotizen_erzeugen() {
         // ----------------------------------------------------------------------------------------------------
             $n = parent::importnotizen_erzeugen();
@@ -953,9 +984,11 @@
         Aufnahme::z_no_front_aufloesen();
         Dokument::signaturen_bestimmen();
         Dokument::zwei_briefe_trennen();
+        Dokument::nochmal_irrelevante_checken();
 
-        if($test_run)
+        if($test_run) {
             ergebnis_vorschau();
+        }
         else {
             if(!Dokument::neue_in_db_schreiben($result)) {
                 echo "Errors occurred.";
