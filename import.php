@@ -3,6 +3,10 @@
     function import_render() {
     // ========================================================================================================
         $action = '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'));
+        if($_SESSION['user_id'] == 1)
+            $imp_but = '<button data-proc="execute" type="button" class="form-control btn btn-default">Import!</button>';
+        else
+            $imp_but = false;
         echo <<<HTML
             <style>
                 table {
@@ -37,7 +41,7 @@
                 <button data-proc="test_persons" type="button" class="form-control btn btn-default">Personennamen analysieren</button>
                 <button data-proc="test_documents" type="button" class="form-control btn btn-default">Dokumente analysieren</button>
                 <button data-proc="test_run" type="button" class="form-control btn btn-default">Import-Testlauf</button>
-                <button data-proc="execute" type="button" class="form-control btn btn-default">Import!</button>
+                $imp_but
             </form>
             <hr />
             <script>
