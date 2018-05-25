@@ -299,7 +299,7 @@
 
             $this->tabellenzeile->relevant = false;
             if(isset(Tabellenzeile::$alle[$this->nr_kehrseite]) && !Tabellenzeile::$alle[$this->nr_kehrseite]->relevant) {
-                $this->tabellenzeile->notizen[] = sprintf('Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]', Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
+                $this->tabellenzeile->notizen[] = sprintf('Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_ASSOC_IRRELEVANT]', Tabellenzeile::$alle[$this->nr_kehrseite]->nr, Tabellenzeile::$alle[$this->nr_kehrseite]->zeile);
                 $this->tabellenzeile->fehlerstatus = 'Z_ASSOC_IRRELEVANT';
             }
             else {
@@ -779,7 +779,7 @@
                         foreach($alle_aufnahmen as $a) {
                             $a->relevant = false;
                             $a->tabellenzeile->notizen[] = sprintf(
-                                'Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_FRONT_IRRELEVANT]',
+                                'Zugehörige Aufnahme "%s" (Excel-Zeile %s) bereits irrelevant [Z_ASSOC_IRRELEVANT]',
                                 $a->nr_kehrseite, Tabellenzeile::$alle[$a->nr_kehrseite]->zeile
                             );
                             $a->tabellenzeile->fehlerstatus = 'Z_ASSOC_IRRELEVANT';
