@@ -234,6 +234,15 @@
 				'label' => 'Import Module',
 				'href' => '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'))
 			);
+			$extras_menu['items'][] = array(
+				'label' => 'Show Imported Persons',
+				'href' => '?' . http_build_query(array(
+					'mode' => MODE_QUERY,
+					PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON,
+					QUERY_PARAM_VIEW => QUERY_VIEW_RESULT,
+					QUERY_PARAM_ID => 'J7Eu3MSIWQWn')
+				)
+			);
 			$extras_menu['items'][] = '<li class="divider"></li>';
 			$extras_menu['items'][] = array(
 				'label' => 'Query the Database',
@@ -259,8 +268,8 @@
 		$extras_menu['items'][] = $stored_queries_list;
 
 		$featured_queries = array(
-			'NjRHJyhI6TjO' => 'Network of Persons and Documents',
-			'nADglu04RgpM' => 'Communication Network',
+			//'NjRHJyhI6TjO' => 'Network of Persons and Documents',
+			//'nADglu04RgpM' => 'Communication Network',
 			'araJkEFefCfM' => 'Map of Places',
 			'NKJZDUriSEdY' => 'Timeline of Documents',
 			'Ge287xnvkgia' => 'Timeline of Daily Edits'
