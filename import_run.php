@@ -221,6 +221,9 @@
             $d = $this->tabellenzeile->datum;
             $this->datum_jahr = $this->tabellenzeile->jahr;
 
+            $datum_orig = $d;
+            $jahr_orig = $this->datum_jahr;
+
             // remove squared brackets and everything inside and directly adjacent
             $d = trim(preg_replace('/[^\s]*\[.*?\][^\s]*/', '', $d));
             $this->datum_jahr = trim(preg_replace('/[^\s]*\[.*?\][^\s]*/', '', $this->datum_jahr));
@@ -228,6 +231,9 @@
             // remove parentheses and everything inside and directly adjacent
             $d = trim(preg_replace('/[^\s]*\(.*?\)[^\s]*/', '', $d));
             $this->datum_jahr = trim(preg_replace('/[^\s]*\(.*?\)[^\s]*/', '', $this->datum_jahr));
+
+            if($this->datum_jahr != $jahr_orig || $d != $datum_orig)
+                $this->notizen[] = 'Unsicherheitsangaben in Datum und/oder Jahr [Z_DATE_ANNOT]';
 
             // remove everything non alpha numeric from datum
             $d = trim(preg_replace('/[^a-z0-9\. ]/', '', $d));
