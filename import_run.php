@@ -704,11 +704,26 @@
             foreach(Dokument::$alle as $doc) {
                 if($doc->db_id !== false)
                     continue;
+                // calculate gregorian years
+                $conv_columns = array('date_year', 'date_month', 'date_day', 'date_year_from', 'date_year_to');
+                $conv_values = array($doc->datum_jahr, $doc->datum_monat, $doc->datum_tag, null, null);
+                alhamra_before_insert_or_update('documents', $TABLES['documents'], $conv_columns, $conv_values);
+                $gregorian_year_lower = $gregorian_year_upper = null;
+                if(count($conv_values) == 7) {
+                    $gregorian_year_lower = $conv_values[5];
+                    $gregorian_year_upper = $conv_values[6];
+                }
                 // insert document
-                $sql = "insert into documents (signature, pack_nr, date_year, date_month, date_day, \"type\", summary, edit_note, edit_status, physical_location)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, 'imported', 30)";
-                $values = array($doc->signatur, $doc->buendel, $doc->datum_jahr, $doc->datum_monat, $doc->datum_tag,
-                    $doc->dok_typ, $doc->inhalt, $doc->importnotizen_erzeugen());
+                $sql = "insert into documents (
+                    signature, pack_nr,
+                    date_year, date_month, date_day, gregorian_year_lower, gregorian_year_upper,
+                    \"type\", summary, edit_note, edit_status, physical_location)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'imported', 30)";
+                $values = array(
+                    $doc->signatur, $doc->buendel,
+                    $doc->datum_jahr, $doc->datum_monat, $doc->datum_tag, $gregorian_year_lower, $gregorian_year_upper,
+                    $doc->dok_typ, $doc->inhalt, $doc->importnotizen_erzeugen()
+                );
                 $stmt = Datenbank::$db->prepare($sql);
                 if($stmt === false)
                     return proc_error(l10n('error.db-prepare'), Datenbank::$db);
@@ -757,6 +772,22 @@
         }
 
         // ----------------------------------------------------------------------------------------------------
+        public function aufnahmedaten_uebernehmen() {
+        // Voraussetzung: $aufnahme muss auf eine Aufnahme zeigen; das Dokument wird daraus rekonstruiert
+        // ----------------------------------------------------------------------------------------------------
+            $this->edit_status = 'imported';
+            $this->aufnahme->tabellenzeile->relevant = true; // sicherstellen, kann sein dass das verändert wurde
+            $this->aufnahme->dokument = $this;
+            $this->inhalt = $this->aufnahme->tabellenzeile->inhalt;
+            $this->weitere_aufnahmen = array();
+            $this->notizen = array();
+            // copy all info from frontside aufnahme
+            foreach(array('signatur', 'buendel', 'datum_jahr', 'datum_monat', 'datum_tag', 'adressat', 'absender', 'weitere', 'dok_typ') as $prop)
+                $this->{$prop} = $this->aufnahme->{$prop};
+            $this->notizen[] = $this->aufnahme->tabellenzeile->importnotiz_formatieren();
+        }
+
+        // ----------------------------------------------------------------------------------------------------
         public static function aus_aufnahme($a) {
         // ----------------------------------------------------------------------------------------------------
             // already in document list
@@ -768,17 +799,8 @@
             }
 
             $d = new Dokument;
-            $a->tabellenzeile->relevant = true; // sicherstellen, kann sein dass das verändert wurde
-            $d->edit_status = 'imported';
             $d->aufnahme = $a;
-            $d->aufnahme->dokument = $d;
-            $d->inhalt = $d->aufnahme->tabellenzeile->inhalt;
-
-            // copy all info from frontside aufnahme
-            foreach(array('signatur', 'buendel', 'datum_jahr', 'datum_monat', 'datum_tag', 'adressat', 'absender', 'weitere', 'dok_typ') as $prop)
-                $d->{$prop} = $d->aufnahme->{$prop};
-
-            $d->notizen[] = $a->tabellenzeile->importnotiz_formatieren();
+            $d->aufnahmedaten_uebernehmen();
             Dokument::$alle[$a->signatur] = $d;
         }
 
@@ -838,6 +860,30 @@
                 $doks_neu[$sig] = $d;
             }
             Dokument::$alle = $doks_neu;
+        }
+
+        // ----------------------------------------------------------------------------------------------------
+        public static function zwei_briefe_trennen() {
+        // ----------------------------------------------------------------------------------------------------
+            // Ein Dokument mit 2 Aufnahmen die beide "B" sind muss aufgespalten werden in 2 Dokumente
+            $aufnahmen = array();
+
+            foreach(Dokument::$alle as $sig => $d) {
+                if($d->db_id !== false)
+                    continue;
+                $a1 = $d->aufnahme->art == 'B' ? $d->aufnahme : null;
+                $a2 = $a1 && count($d->weitere_aufnahmen) == 1 && $d->weitere_aufnahmen[0]->art == 'B' ? $d->weitere_aufnahmen[0] : null;
+                if(!$a1 || !$a2)
+                    continue;
+                $a2->ist_rueckseite = $a1->ist_rueckseite = false;
+                $a2->nr_kehrseite = $a1->nr_kehrseite = null;
+                $a2->dokument = null;
+                $aufnahmen[] = $a2;
+                $d->aufnahmedaten_uebernehmen();
+            }
+
+            foreach($aufnahmen as $a)
+                Dokument::aus_aufnahme($a);
         }
     }
 
@@ -900,6 +946,7 @@
         Aufnahme::rueckseiten_zu_dokument_zuordnen();
         Aufnahme::z_no_front_aufloesen();
         Dokument::signaturen_bestimmen();
+        Dokument::zwei_briefe_trennen();
 
         if($test_run)
             ergebnis_vorschau();
