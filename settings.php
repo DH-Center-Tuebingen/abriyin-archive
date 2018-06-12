@@ -122,7 +122,6 @@
 		)
 	);
 
-
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
@@ -254,7 +253,8 @@
 						'table' => 'scans',
 						'field' => 'id',
 						'display' => 'filename',
-						'related_label' => 'Document Captured By This Scan'),
+						'related_label' => 'Document Captured By This Scan'
+					),
 					'linkage' => array(
 						'table' => 'document_scans',
 						'fk_self' => 'document',
@@ -269,7 +269,8 @@
 						'field'  => 'id',
 						'display' => 'name_translit',
 						'default' => 30,
-						'related_label' => 'Documents Physically Located At This Place')
+						'related_label' => 'Documents Physically Located At This Place'
+					)
 				),
 				'primary_agents' => array('label' => 'Primary Agents', 'required' => false, 'type' => T_LOOKUP,
 					'help' => 'The kind of primary agent of a document varies by document type. In a letter the primary agents are the senders; in a sales contract they are sellers; in an authorization document they are the principals. If a person group acts as primary agent of a document, pick this person group in the following field.',
@@ -278,7 +279,8 @@
 						'table' => 'persons',
 						'field' => 'id',
 						'display' => $CUSTOM_VARIABLES['person_name_display'],
-						'related_label' => 'Documents This Person Has Sent'),
+						'related_label' => 'Documents This Person Has Sent'
+					),
 					'linkage' => array(
 						'table' => 'document_primary_agents',
 						'fk_self' => 'document',
@@ -758,7 +760,8 @@
 						'table' => 'places',
 						'field' => 'id',
 						'display' => 'name_translit',
-						'related_label' => 'Person Groups At This Place'),
+						'related_label' => 'Person Groups At This Place'
+					),
 					'linkage' => array(
 						'table' => 'person_group_places',
 						'fk_self' => 'person_group',
@@ -1000,4 +1003,17 @@
 			)
 		),
 	);
+
+	// make all lookup fields conditional async, if not already set
+	foreach($TABLES as $table_name => &$table) {
+		foreach($table['fields'] as &$field) {
+			if(isset($field['lookup']) && !isset($field['lookup']['async'])) {
+				$field['lookup']['async'] = array(
+						'min_input_len' => 2,
+						'max_results' => 100,
+						'min_threshold' => 500
+				);
+			}
+		}
+	}
 ?>
