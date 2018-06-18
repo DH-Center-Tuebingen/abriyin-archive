@@ -459,7 +459,7 @@
 					'display' => 'name_translit',
 					'related_label' => 'Document Recipient Details Where This Place Appears')
 				),
-				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_ENUM, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => '0', 'values' => array('1' => 'Yes', '0' => 'No')),
+				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_BOOLEAN, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => 'off', 'options' => array('onstyle' => 'success')),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
