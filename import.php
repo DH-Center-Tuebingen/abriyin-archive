@@ -56,10 +56,6 @@ HTML;
             call_user_func('import_' . $_GET['proc']);
     }
 
-    function ends_with($end, $s) {
-        return substr($s, -strlen($end)) == $end;
-    }
-
     // ========================================================================================================
 	// called via before_insert_or_update on all tables
 	function unify_diacritics($text) {
