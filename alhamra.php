@@ -368,7 +368,10 @@
 				'table_label' => '',
 				'field_name' => first(array_keys($pk_vals)),
 				'field_label' => '',
-				'display_label' => 'Editing History Of This ' . $table['item_name']);
+				'display_label' => 'Editing History Of This ' . $table['item_name'],
+				'search_type' => SEARCH_EXACT,
+				'raw_fk' => 1
+			);
 		}
 	}
 
