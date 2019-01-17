@@ -26,7 +26,7 @@
 	$CUSTOM_VARIABLES['history'] = array(
 		'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'reset' => false /* not sure */, 'help' => 'This is an informal field that you can use to leave personal editoral comments and notes (e.g. what you are unclear about)'),
 		'edit_status' => array('label' => 'Editing Status', 'type' => T_ENUM, 'required' => true, 'default' => 'editing', 'help' => 'While you are editing the document set the status to <b>Editing</b>. When you are done editing and feel the record is ready for review, set to <b>Editing finished</b>. If you are unclear about any field or information set the status to <b>Unclear</b> and put an explanatory comment or note in the <i>Editing note</i> field. The status <b>Approved</b> should only be set by the seminar leaders.',
-			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved')),
+			'values' => array('editing' => 'Editing', 'editing_finished' => 'Editing finished', 'unclear' => 'Unclear', 'approved' => 'Approved', 'imported' => 'Imported')),
 		'edit_user' => array('label' => 'Last Editor', 'type' => T_LOOKUP, 'editable' => false, 'default' => REPLACE_DYNAMIC_SESSION_USER, 'lookup' => array('cardinality' => CARDINALITY_SINGLE, 'table' => 'users', 'field' => 'id', 'display' => 'name'))
 	);
 
@@ -122,13 +122,13 @@
 		)
 	);
 
-
 	/* ========================================================================================================	*/
 	$APP = array(
 		'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
 		'plugins' => array(
 			'alhamra.php',
-			'calendar.php'),
+			'calendar.php',
+			'import.php'),
 		'page_icon' => 'images/uni-tuebingen.ico',
 		'title' => 'ʿAbrīyīn Archive',
 		'view_display_null_fields' => false,
@@ -146,7 +146,7 @@
 		'list_mincolwidth_pxperchar' => 6,
 		'custom_related_list_proc' => 'alhamra_custom_related_list',
 		'preprocess_html_func' => 'alhamra_preprocess_html',
-		'additional_callable_plugin_functions' => array(),
+		'additional_callable_plugin_functions' => array('import_render'),
 		'querypage_stored_queries_table' => 'stored_queries',
 		'querypage_permission_func' => 'alhamra_querypage_check_permission',
 		'cache_dir' => 'cache',
@@ -154,7 +154,8 @@
 			'include_table' => true,
 			'max_detail_results' => 50,
 			'transliterator_rules' => ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;'
-		)
+		),
+		'is_table_relevant_for_merge_func' => 'alhamra_is_table_relevant_for_merge'
 	);
 
 	/* ========================================================================================================	*/
@@ -253,7 +254,8 @@
 						'table' => 'scans',
 						'field' => 'id',
 						'display' => 'filename',
-						'related_label' => 'Document Captured By This Scan'),
+						'related_label' => 'Document Captured By This Scan'
+					),
 					'linkage' => array(
 						'table' => 'document_scans',
 						'fk_self' => 'document',
@@ -268,7 +270,8 @@
 						'field'  => 'id',
 						'display' => 'name_translit',
 						'default' => 30,
-						'related_label' => 'Documents Physically Located At This Place')
+						'related_label' => 'Documents Physically Located At This Place'
+					)
 				),
 				'primary_agents' => array('label' => 'Primary Agents', 'required' => false, 'type' => T_LOOKUP,
 					'help' => 'The kind of primary agent of a document varies by document type. In a letter the primary agents are the senders; in a sales contract they are sellers; in an authorization document they are the principals. If a person group acts as primary agent of a document, pick this person group in the following field.',
@@ -277,7 +280,8 @@
 						'table' => 'persons',
 						'field' => 'id',
 						'display' => $CUSTOM_VARIABLES['person_name_display'],
-						'related_label' => 'Documents This Person Has Sent'),
+						'related_label' => 'Documents This Person Has Sent'
+					),
 					'linkage' => array(
 						'table' => 'document_primary_agents',
 						'fk_self' => 'document',
@@ -414,7 +418,7 @@
 				//'content' => array('label' => 'Content (XML)', 'type' => T_TEXT_AREA),
 				'summary' => array('label' => 'Summary', 'type' => T_TEXT_AREA),
 				'translation' => array('label' => 'English Translation', 'type' => T_TEXT_AREA),
-				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>unclear / illegible words, unclear vocalization (i.e. personal name)</li><li>“relative dates”, i.e. date deduced from affiliation to a bundle and / or with regards to content (events, people involved).</li><li>possible errors (e.g. unclear reading of dates etc.)</li></ul>'),
+				'edit_note' => array('label' => 'Editing Note', 'type' => T_TEXT_AREA, 'help' => 'Remarks about<ul><li>unclear / illegible words, unclear vocalization (i.e. personal name)</li><li>“relative dates”, i.e. date deduced from affiliation to a bundle and / or with regards to content (events, people involved).</li><li>possible errors (e.g. unclear reading of dates etc.)</li><li>If editing status is <code>Imported</code>, this field shows details of the scans used to create this document</li></ul>'),
 				'edit_status' => $CUSTOM_VARIABLES['history']['edit_status'],
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			),
@@ -456,7 +460,7 @@
 					'display' => 'name_translit',
 					'related_label' => 'Document Recipient Details Where This Place Appears')
 				),
-				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_ENUM, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => '0', 'values' => array('1' => 'Yes', '0' => 'No')),
+				'has_forwarded' => array('label' => 'Forwarding Address?', 'type' => T_BOOLEAN, 'required' => true, 'help' => 'Specify whether this recipient was only forwarding, i.e. the recipient acted as an intermediary in the delivery of the document', 'default' => 'off', 'options' => array('onstyle' => 'success')),
 				'edit_user' => $CUSTOM_VARIABLES['history']['edit_user']
 			)
 		),
@@ -473,15 +477,15 @@
 				'before_insert' => 'alhamra_before_insert_or_update',
 				'before_update' => 'alhamra_before_insert_or_update'),
 			'fields' => array(
-				'lastname_translit' => array('label' => 'Family name (translit.)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => false,
+				'lastname_translit' => array('label' => 'Family name (translit.)', 'type' => T_TEXT_LINE, 'len' => 500, 'required' => false,
 					'help' => 'If the family name is missing, please enter "Unknown" here. If the family name is illegible, please enter "Unclear" and make an explanatory note in the field <i>Information</i>'),
-				'forename_translit' => array('label' => 'First name (translit.)', 'type' => T_TEXT_LINE, 'len' => 50, 'required' => true),
-				'byname_translit' => array('label' => 'Byname (translit.)', 'type' => T_TEXT_LINE, 'len' => 50),
+				'forename_translit' => array('label' => 'First name (translit.)', 'type' => T_TEXT_LINE, 'len' => 500, 'required' => true),
+				'byname_translit' => array('label' => 'Byname (translit.)', 'type' => T_TEXT_LINE, 'len' => 500),
 				'id' => array('label' => 'ID', 'type' => T_NUMBER, 'editable' => false),
 				'sex' => array('label' => 'Gender', 'type' => T_ENUM, 'required' => true, 'default' => 'm', 'values' => array('m' => 'Male', 'f' => 'Female')),
-				'lastname_arabic' => array('label' => 'Family name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),
-				'forename_arabic' => array('label' => 'First name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50),
-				'byname_arabic' => array('label' => 'Byname (Arabic)', 'type' => T_TEXT_LINE, 'len' => 50 ),
+				'lastname_arabic' => array('label' => 'Family name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 500),
+				'forename_arabic' => array('label' => 'First name (Arabic)', 'type' => T_TEXT_LINE, 'len' => 500),
+				'byname_arabic' => array('label' => 'Byname (Arabic)', 'type' => T_TEXT_LINE, 'len' => 500),
 				'title' => array('label' => 'Title', 'type' => T_ENUM, 'values' => array('imām' => 'imām', 'sayyid' => 'sayyid', 'šayḫ' => 'šayḫ', 'wālī' => 'wālī')),
 				'group_memberships' => array('label' => 'Person\'s Groups', 'type' => T_LOOKUP,
 					'lookup' => array(
@@ -757,7 +761,8 @@
 						'table' => 'places',
 						'field' => 'id',
 						'display' => 'name_translit',
-						'related_label' => 'Person Groups At This Place'),
+						'related_label' => 'Person Groups At This Place'
+					),
 					'linkage' => array(
 						'table' => 'person_group_places',
 						'fk_self' => 'person_group',
@@ -914,6 +919,7 @@
 			'description' => 'Document Scans',
 			'item_name' => 'Document Scans',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'scan')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'scan' => array('label' => 'Scan Image', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['scan']),
@@ -927,6 +933,7 @@
 			'description' => '',
 			'item_name' => 'Document Keywords',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'keyword')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'keyword' => array('label' => 'Keyword', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['keyword']),
@@ -940,6 +947,7 @@
 			'description' => '',
 			'item_name' => 'Places in Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'place')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
@@ -953,6 +961,7 @@
 			'description' => '',
 			'item_name' => 'Primary Agents of Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'person')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'person' => array('label' => 'Primary Agent', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
@@ -966,6 +975,7 @@
 			'description' => '',
 			'item_name' => 'Primary Agent Groups of Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'person_group')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'person_group' => array('label' => 'Primary Agent Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
@@ -979,6 +989,7 @@
 			'description' => '',
 			'item_name' => 'Person Group Memberships',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('person', 'person_group')),
 			'fields' => array(
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
@@ -992,6 +1003,7 @@
 			'description' => '',
 			'item_name' => 'Places of Person Groups',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('person_group', 'place')),
 			'fields' => array(
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
@@ -999,4 +1011,17 @@
 			)
 		),
 	);
+
+	// make all lookup fields conditional async, if not already set
+	foreach($TABLES as $table_name => &$table) {
+		foreach($table['fields'] as &$field) {
+			if(isset($field['lookup']) && !isset($field['lookup']['async'])) {
+				$field['lookup']['async'] = array(
+						'min_input_len' => 2,
+						'max_results' => 100,
+						'min_threshold' => 500
+				);
+			}
+		}
+	}
 ?>

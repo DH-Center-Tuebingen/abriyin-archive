@@ -229,11 +229,28 @@
 		$extras_menu = array('name' => 'Extras', 'items' => array());
 
 		// create stored queries
-		if($_SESSION['user_data']['role'] == 'admin' && $_SESSION['user_id'] == 1) {
+		if($_SESSION['user_data']['role'] == 'admin') {
+		  	if($_SESSION['user_id'] == 1) {
+				$extras_menu['items'][] = array(
+					'label' => 'Query the Database',
+					'href' => '?' . http_build_query(array('mode' => MODE_QUERY))
+				);
+				$extras_menu['items'][] = '<li class="divider"></li>';
+				$extras_menu['items'][] = array(
+					'label' => 'Import Module',
+					'href' => '?' . http_build_query(array('mode' => MODE_PLUGIN, PLUGIN_PARAM_FUNC => 'import_render'))
+				);
+			}
 			$extras_menu['items'][] = array(
-				'label' => 'Query the Database',
-				'href' => '?' . http_build_query(array('mode' => MODE_QUERY))
+				'label' => 'Show Imported Persons',
+				'href' => '?' . http_build_query(array(
+					'mode' => MODE_QUERY,
+					PLUGIN_PARAM_NAVBAR => PLUGIN_NAVBAR_ON,
+					QUERY_PARAM_VIEW => QUERY_VIEW_RESULT,
+					QUERY_PARAM_ID => 'J7Eu3MSIWQWn')
+				)
 			);
+			$extras_menu['items'][] = '<li class="divider"></li>';
 		}
 
 		// stored queries item
@@ -254,8 +271,8 @@
 		$extras_menu['items'][] = $stored_queries_list;
 
 		$featured_queries = array(
-			'NjRHJyhI6TjO' => 'Network of Persons and Documents',
-			'nADglu04RgpM' => 'Communication Network',
+			//'NjRHJyhI6TjO' => 'Network of Persons and Documents',
+			//'nADglu04RgpM' => 'Communication Network',
 			'araJkEFefCfM' => 'Map of Places',
 			'NKJZDUriSEdY' => 'Timeline of Documents',
 			'Ge287xnvkgia' => 'Timeline of Daily Edits'
@@ -351,7 +368,10 @@
 				'table_label' => '',
 				'field_name' => first(array_keys($pk_vals)),
 				'field_label' => '',
-				'display_label' => 'Editing History Of This ' . $table['item_name']);
+				'display_label' => 'Editing History Of This ' . $table['item_name'],
+				'search_type' => SEARCH_EXACT,
+				'raw_fk' => 1
+			);
 		}
 	}
 
@@ -376,6 +396,10 @@
 		/*$demo_msg = "<div class='alert alert-info'><b>Important:</b> This is a demo version to play with. Data you enter here may be erased at any time.</div>";
 		if(!in_array($demo_msg, $_SESSION['msg']))
 			$_SESSION['msg'][] = $demo_msg;*/
+
+		foreach($TABLES as $table_name => &$table)
+			if(in_array($table_name, array('documents', 'person_groups', 'persons', 'places', 'sources')))
+				$table['actions'][] = MODE_MERGE;
 
 		$role = $_SESSION['user_data']['role'];
 
@@ -471,5 +495,11 @@
 
 		// only admins can make and share queries
 		return $_SESSION['user_data']['role'] === 'admin';
+	}
+
+	// ========================================================================================================
+	function alhamra_is_table_relevant_for_merge($merge_table, $referenced_table) {
+	// ========================================================================================================
+		return !ends_with('_history', $referenced_table);
 	}
 ?>
