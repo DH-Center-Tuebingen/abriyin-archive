@@ -397,6 +397,10 @@
 		if(!in_array($demo_msg, $_SESSION['msg']))
 			$_SESSION['msg'][] = $demo_msg;*/
 
+		foreach($TABLES as $table_name => &$table)
+			if(in_array($table_name, array('documents', 'person_groups', 'persons', 'places', 'sources')))
+				$table['actions'][] = MODE_MERGE;
+
 		$role = $_SESSION['user_data']['role'];
 
 		if($role != 'admin') {
@@ -491,5 +495,11 @@
 
 		// only admins can make and share queries
 		return $_SESSION['user_data']['role'] === 'admin';
+	}
+
+	// ========================================================================================================
+	function alhamra_is_table_relevant_for_merge($merge_table, $referenced_table) {
+	// ========================================================================================================
+		return !ends_with('_history', $referenced_table);
 	}
 ?>

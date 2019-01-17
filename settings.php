@@ -154,7 +154,8 @@
 			'include_table' => true,
 			'max_detail_results' => 50,
 			'transliterator_rules' => ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;'
-		)
+		),
+		'is_table_relevant_for_merge_func' => 'alhamra_is_table_relevant_for_merge'
 	);
 
 	/* ========================================================================================================	*/
@@ -918,6 +919,7 @@
 			'description' => 'Document Scans',
 			'item_name' => 'Document Scans',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'scan')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'scan' => array('label' => 'Scan Image', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['scan']),
@@ -931,6 +933,7 @@
 			'description' => '',
 			'item_name' => 'Document Keywords',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'keyword')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'keyword' => array('label' => 'Keyword', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['keyword']),
@@ -944,6 +947,7 @@
 			'description' => '',
 			'item_name' => 'Places in Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'place')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
@@ -957,6 +961,7 @@
 			'description' => '',
 			'item_name' => 'Primary Agents of Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'person')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'person' => array('label' => 'Primary Agent', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
@@ -970,6 +975,7 @@
 			'description' => '',
 			'item_name' => 'Primary Agent Groups of Documents',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('document', 'person_group')),
 			'fields' => array(
 				'document' => array('label' => 'Document', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['document']),
 				'person_group' => array('label' => 'Primary Agent Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
@@ -983,6 +989,7 @@
 			'description' => '',
 			'item_name' => 'Person Group Memberships',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('person', 'person_group')),
 			'fields' => array(
 				'person' => array('label' => 'Person', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person']),
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
@@ -996,6 +1003,7 @@
 			'description' => '',
 			'item_name' => 'Places of Person Groups',
 			'show_in_related' => false,
+			'primary_key' => array('auto' => false, 'columns' => array('person_group', 'place')),
 			'fields' => array(
 				'person_group' => array('label' => 'Person Group', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['person_group']),
 				'place' => array('label' => 'Place', 'type' => T_LOOKUP, 'lookup' => $CUSTOM_VARIABLES['fk']['place']),
