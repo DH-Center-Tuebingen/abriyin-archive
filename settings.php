@@ -1,4 +1,4 @@
-<?
+<?php
 	/* ========================================================================================================	*/
 	// These $CUSTOM_VARIABLES entries are helper variables
 	$CUSTOM_VARIABLES['islam_months'] = array(

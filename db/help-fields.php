@@ -10,7 +10,7 @@
 		border-collapse: collapse;
 	}
 </style>
-<?
+<?php
 	require_once '../../dbWebGen/inc/constants.php';
 	require_once '../settings.php';
 	
